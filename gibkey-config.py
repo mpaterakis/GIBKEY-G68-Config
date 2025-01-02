@@ -29,14 +29,103 @@ KEY_INDEXES = {
     'capslock': 3,
     'lshift': 4,
     'lctrl': 5,
-    'unknown': 6,
+    'unknown1': 6,
     '1': 7,
     'q': 8,
     'a': 9,
     'z': 10,
     'lwin': 11,
     'unknown2': 12,
-    '2': 13
+    '2': 13,
+    'w': 14,
+    's': 15,
+    'x': 16,
+    'lalt': 17, 
+    'unknown3': 18,
+    '3': 19,
+    'e': 20,
+    'd': 21,
+    'c': 22,
+    'unknown4': 23,
+    'unknown5': 24,
+    '4': 25,
+    'r': 26,
+    'f': 27,
+    'v': 28,
+    'unknown6': 29,
+    'unknown7': 30,
+    '5': 31,
+    't': 32,
+    'g': 33,
+    'b': 34,
+    'space': 35,
+    'unknown9': 36,
+    '6': 37,
+    'y': 38,
+    'h': 39,
+    'n': 40,
+    'unknown10': 41,
+    'unknown11': 42,
+    '7': 43,
+    'u': 44,
+    'j': 45,
+    'm': 46,
+    'unknown12': 47,
+    'unknown13': 48,
+    '8': 49,
+    'i': 50,
+    'k': 51,
+    'comma': 52,
+    'unknown14': 53,
+    'unknown15': 54,
+    '9': 55,
+    'o': 56,
+    'l': 57,
+    'period': 58,
+    'unknown16': 59,
+    'unknown17': 60,
+    '0': 61,
+    'p': 62,
+    'semicolon': 63,
+    'slash': 64,
+    'lalt': 65,
+    'unknown18': 66,
+    'unknown19': 67,
+    'minus': 68,
+    'lbracket': 69,
+    'quote': 70,
+    'unknown20': 71,
+    'unknown21': 72,
+    'unknown22': 73,
+    'plus': 74,
+    'rbracket': 75,
+    'unknown23': 76,
+    'rshift': 77,
+    'fn': 78,
+    'unknown24': 79,
+    'backspace': 80,
+    'backslash': 81,
+    'enter': 82,
+    'unknown25': 83,
+    'rctrl': 84,
+    'unknown26': 85,
+    'unknown27': 86,
+    'delete': 87,
+    'unknown28': 88,
+    'unknown29': 89,
+    'left': 90,
+    'unknown31': 91,
+    'unknown32': 92,
+    'unknown33': 93,
+    'unknown34': 94,
+    'up': 95,
+    'down': 96,
+    'unknown35': 97,
+    'pageup': 98,
+    'pagedown': 99,
+    'unknown36': 100,
+    'unknown37': 101,
+    'right': 102
 }
 
 # Constants for vendor and product IDs
@@ -45,9 +134,13 @@ PRODUCT_ID = 0x0049
 
 device = None
 out_endpoint = None
+silent = False
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Control lighting patterns and brightness.")
+    parser.add_argument(
+        "--silent", action='store_true', help="Shoosh."
+    )
     parser.add_argument(
         "-p", "--pattern", type=str,
         help="Specify the lighting pattern (e.g., 'wave', 'static')."
@@ -68,8 +161,24 @@ def parse_args():
         "-s", "--speed", type=int, choices=range(1, 6), metavar="[1-5]",
         help="Set animation speed (1-5)."
     )
+    parser.add_argument(
+        "-kc", "--keys_color", type=str, nargs='+', metavar="[key=color]",
+        help="Set inidividual key rgb (key=color). For example '-kc a=ffffff b=000000 enter=010101'"
+    )
 
     args = parser.parse_args()
+
+    # Process silent
+    global silent
+    silent = args.silent
+
+    # Process keys_color
+    keys_color = {}
+    if (args.keys_color != None):
+        try:
+            keys_color = dict(pair.split('=') for pair in args.keys_color)
+        except:
+            ValueError(f"Error: keys_color is not valid.")
 
     # Process pattern
     pattern = args.pattern
@@ -86,9 +195,7 @@ def parse_args():
             index, original_pattern = matched_pattern
             pattern = original_pattern
         else:
-            print(f"Error: Pattern '{formatted_pattern}' is not valid.")
-    else:
-        print("No pattern selected.")
+            ValueError(f"Error: Pattern '{formatted_pattern}' is not valid.")
 
     # Process brightness
     brightness = args.brightness
@@ -110,12 +217,11 @@ def parse_args():
     if speed is None:
         speed = 2
     speed = 5 - speed
-    
-    return (pattern, brightness, color, direction, speed)
+
+    return (pattern, brightness, color, direction, speed, keys_color)
 
 # Find and set up USB device
 def setup_device():
-    # Find the device
     global device, out_endpoint
     device = usb.core.find(idVendor=VENDOR_ID, idProduct=PRODUCT_ID)
     if device is None:
@@ -151,21 +257,24 @@ def setup_device():
 
 # Send the data to the USB device
 def send_data(data):
-    global device, out_endpoint
+    global device, out_endpoint, silent
     retries = 5
     timeout = 1000
     for attempt in range(retries):
         try:
             device.write(out_endpoint.bEndpointAddress, data, timeout=timeout)
-            print(f"Packet sent: {data.hex()}")
+            if not silent:
+                print(f"Packet sent: {data.hex()}")
             break
         except usb.core.USBError as e:
-            print(f"Error during data transfer: {e}")
+            if not silent:
+                print(f"Error during data transfer: {e}")
             if attempt < retries - 1:
-                print(f"Retrying...")
+                if not silent:
+                    print(f"Retrying...")
                 time.sleep(1)
             else:
-                print("Max retries reached. Failed to send chunk.")
+                raise RuntimeError("Max retries reached. Failed to send chunk.")
 
 # Generate packet verificationgenerate_verification
 def generate_verification(packet_data):
@@ -185,7 +294,6 @@ def generate_pattern_packet(pattern_int, brightness_int, speed_int, direction_in
 
     # Add up the RGB values
     use_default_color = f"{int(color == "default"):02x}"
-    color_total = "0"
     if (color == "default"):
         color = "ffffff"
 
@@ -208,37 +316,29 @@ def generate_pattern_packet(pattern_int, brightness_int, speed_int, direction_in
     return packet
 
 # Generate the packets for indivual key RGB
-def generate_key_rgb_packets():
+def generate_key_rgb_packets(keys_color):
     packets = []
     current_data_length = 0
 
-    line1 = ""
-
-    color = "ff0000"
+    # Create hex string with RGB values for each key
+    data = ""
     for index, key in enumerate(KEY_INDEXES):
-        color = "ff0000"
-        if index % 5 == 0:
-            color = "ff0000"
-        elif index % 5 == 1:
-            color = "00ff00" 
-        elif index % 5 == 2:
-            color = "0000ff" 
-        elif index % 5 == 3:
-            color = "ffffff"
-        elif index % 5 == 4:
-            color = "000000" 
-            
-        # if (index < 2): color = "000000" 
-        print(index % 5, key, " -> ", color)
-        line1 += color
+        color = "000000"
+        if key in keys_color:
+            color = keys_color[key]
+        elif 'all' in keys_color:
+            color = keys_color['all']
+        data += color
     
-    print(line1)
+    # Split the string into different packets
+    parts = [data[i:i + 112] for i in range(0, len(data), 112)]
+    if len(parts[-1]) < 112:
+        parts[-1] = parts[-1].ljust(112, '0')  # Pad with '0' if less than 112
 
-
-    for i in range(1,2):
+    for part in parts:
         first_index_byte = int(current_data_length/0x100)
         second_index_byte = (current_data_length % 0x100)
-        packet_data = f"38{second_index_byte:02x}{first_index_byte:02x}00{line1}0000000000000000000000000000"
+        packet_data = f"38{second_index_byte:02x}{first_index_byte:02x}00{part}"
 
         verification = generate_verification(packet_data)
         packet = f"550b00{verification}{packet_data}"
@@ -252,18 +352,23 @@ def set_pattern(pattern_val, brightness_val, speed_val, direction_val, color = "
     send_data(bytes.fromhex(generate_pattern_packet(LIGHT_PATTERNS[pattern_val], brightness_val, speed_val, direction_val, color)))
 
 # Set key RGB
-def set_keys_rgb():
-    for packet_data in generate_key_rgb_packets():
+def set_keys_color(keys_color):
+    for packet_data in generate_key_rgb_packets(keys_color):
         send_data(bytes.fromhex(packet_data))
         time.sleep(0.1)
 
 # Run the program
 def run_program():
-    pattern, brightness, color, direction, speed = parse_args()
+    pattern, brightness, color, direction, speed, keys_color = parse_args()
     setup_device()
-    set_keys_rgb()
     
+    if (len(keys_color) > 0):
+        set_pattern('Custom', brightness, speed, direction)
+        set_keys_color(keys_color)
+    elif (pattern != None):
+        set_pattern(pattern, brightness, speed, direction, color)
 
+# Run the main functionality
 run_program()
 
 # 550600 {verification} 2000000002aa {pattern}{brightness} {speed}{direction}{use_default_color}00 {color} 0000ff00000400000100000000ffffffffffffffff000000000000000000000000000000000000000000000000
