@@ -22,9 +22,29 @@ LIGHT_PATTERNS = {
     'Cell': 16
 }
 
-# Constants for vendor and product IDs (replace with your actual values)
-VENDOR_ID = 0x258A  # Your vendor ID
-PRODUCT_ID = 0x0049  # Your product ID
+KEY_INDEXES = {
+    'esc': 0,
+    'tilde': 1,
+    'tab': 2,
+    'capslock': 3,
+    'lshift': 4,
+    'lctrl': 5,
+    'unknown': 6,
+    '1': 7,
+    'q': 8,
+    'a': 9,
+    'z': 10,
+    'lwin': 11,
+    'unknown2': 12,
+    '2': 13
+}
+
+# Constants for vendor and product IDs
+VENDOR_ID = 0x258A
+PRODUCT_ID = 0x0049
+
+device = None
+out_endpoint = None
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Control lighting patterns and brightness.")
@@ -96,6 +116,7 @@ def parse_args():
 # Find and set up USB device
 def setup_device():
     # Find the device
+    global device, out_endpoint
     device = usb.core.find(idVendor=VENDOR_ID, idProduct=PRODUCT_ID)
     if device is None:
         raise ValueError("Device not found")
@@ -128,10 +149,37 @@ def setup_device():
     
     return (device, out_endpoint)
 
-# Function to generate the packet with dynamic verification and brightness
-def generate_packet(pattern_int, brightness_int, speed_int, direction_int, color):
+# Send the data to the USB device
+def send_data(data):
+    global device, out_endpoint
+    retries = 5
+    timeout = 1000
+    for attempt in range(retries):
+        try:
+            device.write(out_endpoint.bEndpointAddress, data, timeout=timeout)
+            print(f"Packet sent: {data.hex()}")
+            break
+        except usb.core.USBError as e:
+            print(f"Error during data transfer: {e}")
+            if attempt < retries - 1:
+                print(f"Retrying...")
+                time.sleep(1)
+            else:
+                print("Max retries reached. Failed to send chunk.")
 
-    # Convert integer brightness_int to a two-digit hex string
+# Generate packet verificationgenerate_verification
+def generate_verification(packet_data):
+    verification = 0x00
+    packet_bytes = bytearray.fromhex(packet_data)
+    packet_bytes.reverse()
+    for byte in packet_bytes:
+        verification = (verification + byte)
+    verification = f"{(verification % 0x100):02x}"
+
+    return verification
+
+# Generate the pattern packet
+def generate_pattern_packet(pattern_int, brightness_int, speed_int, direction_int, color):
     brightness = f"{brightness_int:02x}"
     pattern = f"{pattern_int:02x}"
 
@@ -143,10 +191,6 @@ def generate_packet(pattern_int, brightness_int, speed_int, direction_int, color
 
     if (len(color) != 6):
         raise ValueError("Color value is invalid")
-    color_byte1 = int(color[0:2], 16)
-    color_byte2 = int(color[2:4], 16)
-    color_byte3 = int(color[4:6], 16)
-    color_total = f"{((color_byte1 + color_byte2 + color_byte3) % 0x100):02x}"  # Modulo 0x100 ensures roll over
 
     # Set direction value
     direction = f"{direction_int:02x}"
@@ -154,55 +198,71 @@ def generate_packet(pattern_int, brightness_int, speed_int, direction_int, color
     # Set speed value
     speed = f"{speed_int:02x}"
 
-    # Replace verification and brightness in the packet template
+    # Create the packet data
     packet_data = f"2000000002aa{pattern}{brightness}{speed}{direction}{use_default_color}00{color}0000ff00000400000100000000ffffffffffffffff000000000000000000000000000000000000000000000000"
     
-    # Generate verification bytes
-    # Old version: 
-    verification = 0x00
-    packet_bytes = bytearray.fromhex(packet_data)
-    packet_bytes.reverse()
-    for byte in packet_bytes:
-        verification = (verification + byte) % 0x100
-    verification = f"{((brightness_int + pattern_int + speed_int + direction_int + int(color_total, 16) + int(use_default_color,16) + 0xC8) % 0x100):02x}"
+    # Generate verificationgenerate_verification
+    verification = generate_verification(packet_data)
     packet = f"550600{verification}{packet_data}"
 
     return packet
 
+# Generate the packets for indivual key RGB
+def generate_key_rgb_packets():
+    packets = []
+    current_data_length = 0
 
-# Send the data in chunks
-def send_data_in_chunks(device, out_endpoint, data):
-    chunk_size = 64
-    retries = 5
-    timeout = 1000  # Timeout in milliseconds
-    for start in range(0, len(data), chunk_size):
-        chunk = data[start:start + chunk_size]
-        print(f"Sending chunk: {chunk.hex()}")
+    line1 = ""
 
-        # Retry mechanism
-        for attempt in range(retries):
-            try:
-                # Send chunk to the OUT endpoint
-                device.write(out_endpoint.bEndpointAddress, chunk, timeout=timeout)
-                print("Chunk sent successfully!")
-                break
-            except usb.core.USBError as e:
-                print(f"Error during data transfer: {e}")
-                if attempt < retries - 1:
-                    print(f"Retrying in 1 second...")
-                    time.sleep(1)
-                else:
-                    print("Max retries reached. Failed to send chunk.")
+    color = "ff0000"
+    for index, key in enumerate(KEY_INDEXES):
+        color = "ff0000"
+        if index % 5 == 0:
+            color = "ff0000"
+        elif index % 5 == 1:
+            color = "00ff00" 
+        elif index % 5 == 2:
+            color = "0000ff" 
+        elif index % 5 == 3:
+            color = "ffffff"
+        elif index % 5 == 4:
+            color = "000000" 
+            
+        # if (index < 2): color = "000000" 
+        print(index % 5, key, " -> ", color)
+        line1 += color
+    
+    print(line1)
+
+
+    for i in range(1,2):
+        first_index_byte = int(current_data_length/0x100)
+        second_index_byte = (current_data_length % 0x100)
+        packet_data = f"38{second_index_byte:02x}{first_index_byte:02x}00{line1}0000000000000000000000000000"
+
+        verification = generate_verification(packet_data)
+        packet = f"550b00{verification}{packet_data}"
+        packets.append(packet)
+        current_data_length = current_data_length + 0x38
+
+    return packets
 
 # Set light pattern
-def set_pattern(device, out_endpoint, pattern_val, brightness_val, speed_val, direction_val, color = "000000"):
-    send_data_in_chunks(device, out_endpoint, bytes.fromhex(generate_packet(LIGHT_PATTERNS[pattern_val], brightness_val, speed_val, direction_val, color)))
+def set_pattern(pattern_val, brightness_val, speed_val, direction_val, color = "000000"):
+    send_data(bytes.fromhex(generate_pattern_packet(LIGHT_PATTERNS[pattern_val], brightness_val, speed_val, direction_val, color)))
+
+# Set key RGB
+def set_keys_rgb():
+    for packet_data in generate_key_rgb_packets():
+        send_data(bytes.fromhex(packet_data))
+        time.sleep(0.1)
 
 # Run the program
 def run_program():
     pattern, brightness, color, direction, speed = parse_args()
-    device, out_endpoint = setup_device()
-    set_pattern(device, out_endpoint, pattern, brightness, speed, direction, color)
+    setup_device()
+    set_keys_rgb()
+    
 
 run_program()
 
@@ -213,3 +273,13 @@ run_program()
 # 550600 35             2000000002aa 065c                  01010100                                38e3ed  0000ff00000400000100000000ffffffffffffffff000000000000000000000000000000000000000000000000
 # 550600 2f             2000000002aa 0664                  00000000                                ffffff  0000ff00000400000100000000ffffffffffffffff000000000000000000000000000000000000000000000000
 # 550600 35             2000000002aa 0664                  04010100                                ffffff  0000ff00000400000100000000ffffffffffffffff000000000000000000000000000000000000000000000000
+
+# Single key LED commands
+# 550b00 56             38 000000 ffffff{rgb1}{rgb1}{rgb1}{rgb1}{rgb2}000000{rgb1}{rgb1}{rgb1}{rgb1}{rgb2}000000{rgb1}{rgb1}{rgb1}{rgb1}{rgb2}0000
+# 550b00 47             38 380000 00{rgb1}{rgb1}{rgb1}{rgb1}000000000000{rgb1}{rgb1}{rgb1}{rgb1}000000000000{rgb1}{rgb1}{rgb1}{rgb1}{rgb1}0000007e
+# 550b00 83             38 700000 00ff{rgb1}{rgb1}{rgb1}000000000000{rgb1}{rgb1}{rgb1}{rgb1}000000000000{rgb1}{rgb1}{rgb1}{rgb1}000000000000{rgb1}
+# 550b00 3a             38 a80000 {rgb1}{rgb1}{rgb1}000000000000{rgb1}{rgb1}{rgb1}{rgb1}{rgb1}000000{rgb1}{rgb1}{rgb1}000000000000000000{rgb1}7e00
+# 550b00 33             38 e00000 ff000000{rgb1}{rgb1}000000{rgb1}{rgb1}{rgb1}000000{rgb2}000000000000{rgb1}000000000000{rgb2}00000000000000000000
+# 550b00 0e             38 180100 0000{rgb2}{rgb2}000000ff00fc{rgb1}000000000000{rgb2}000000000000000000000000000000000000000000000000000000000000
+# 550b00 81             30 500100 0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 <= might be unused, or it could be the end call
+# 550b00 29             38 000000 ff000000ff000000ffffffff000000ff000000ff000000ffffffff000000ff000000ff000000ff000000000000000000000000000000000000
