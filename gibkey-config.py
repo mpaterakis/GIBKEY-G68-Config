@@ -3,23 +3,23 @@ import usb.util
 import time
 import argparse
 
-LIGHT_PATTERNS = {
-    'Custom': 0,
-    'Runner\'s Light': 1,
-    'Static': 3,
-    'Breathe': 4,
-    'Flower': 5,
-    'Wave': 6,
-    'Wave Vertical': 7,
-    'Bubbler': 8,
-    'Wave Light': 9,
-    'Vortex': 10,
-    'Wave Bar': 22,
-    'Sea Wave': 12,
-    'Ripple': 13,
-    'Star': 20,
-    'Single': 15,
-    'Cell': 16
+RGB_PATTERNS = {
+    'custom': 0,
+    'runners_light': 1,
+    'static': 3,
+    'breathe': 4,
+    'flower': 5,
+    'wave': 6,
+    'wave_vertical': 7,
+    'bubbler': 8,
+    'wave_light': 9,
+    'vortex': 10,
+    'wave_bar': 22,
+    'sea_wave': 12,
+    'ripple': 13,
+    'star': 20,
+    'single': 15,
+    'cell': 16
 }
 
 KEY_INDEXES = {
@@ -134,16 +134,18 @@ PRODUCT_ID = 0x0049
 
 device = None
 out_endpoint = None
+parser = None
 silent = False
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Control lighting patterns and brightness.")
+    global parser
+    parser = argparse.ArgumentParser(description="Configure your GIBKEY G68 to your heart's desire")
     parser.add_argument(
-        "--silent", action='store_true', help="Shoosh."
+        "-s", "--silent", action='store_true', help="Shoosh."
     )
     parser.add_argument(
         "-p", "--pattern", type=str,
-        help="Specify the lighting pattern (e.g., 'wave', 'static')."
+        help="Specify the lighting pattern (e.g., 'wave', 'static')"
     )
     parser.add_argument(
         "-b", "--brightness", type=int, choices=range(0, 101), metavar="[0-100]",
@@ -158,19 +160,31 @@ def parse_args():
         help="Set animation direction (normal/reverse)."
     )
     parser.add_argument(
-        "-s", "--speed", type=int, choices=range(1, 6), metavar="[1-5]",
+        "-sp", "--speed", type=int, choices=range(1, 6), metavar="[1-5]",
         help="Set animation speed (1-5)."
     )
     parser.add_argument(
         "-kc", "--keys_color", type=str, nargs='+', metavar="[key=color]",
         help="Set inidividual key rgb (key=color). For example '-kc a=ffffff b=000000 enter=010101'"
     )
+    parser.add_argument(
+        "--list_keys", action='store_true', help="List all usable key names."
+    )
+    parser.add_argument(
+        "--list_patterns", action='store_true', help="List all usable pattern names."
+    )
 
     args = parser.parse_args()
 
     # Process silent
-    global silent
+    global silent, show_help
     silent = args.silent
+
+    # Process list
+    if (args.list_keys):
+        list_keys()
+    elif (args.list_patterns):
+        list_patterns()
 
     # Process keys_color
     keys_color = {}
@@ -183,19 +197,8 @@ def parse_args():
     # Process pattern
     pattern = args.pattern
     if pattern is not None:
-        matched_pattern = None
-        for index, original_pattern in enumerate(LIGHT_PATTERNS):
-            # Match formatted input against formatted version of the pattern list
-            formatted_original = original_pattern.lower().replace(' ', '_').replace('\'', '')
-            if pattern == formatted_original:
-                matched_pattern = (index, original_pattern)
-                break
-
-        if matched_pattern:
-            index, original_pattern = matched_pattern
-            pattern = original_pattern
-        else:
-            ValueError(f"Error: Pattern '{formatted_pattern}' is not valid.")
+        if pattern not in RGB_PATTERNS:
+            raise ValueError(f"Error: Given pattern is not valid.")
 
     # Process brightness
     brightness = args.brightness
@@ -219,6 +222,18 @@ def parse_args():
     speed = 5 - speed
 
     return (pattern, brightness, color, direction, speed, keys_color)
+
+# List usable keys
+def list_keys():
+    for index, key in enumerate(KEY_INDEXES):
+        if ('unknown' not in key): 
+            print(key)
+    print("all (fallback color for all unspecified keys)")
+
+# List usable patterns
+def list_patterns():
+    for index, key in enumerate(RGB_PATTERNS): 
+        print(key)
 
 # Find and set up USB device
 def setup_device():
@@ -276,11 +291,10 @@ def send_data(data):
             else:
                 raise RuntimeError("Max retries reached. Failed to send chunk.")
 
-# Generate packet verificationgenerate_verification
+# Generate packet verification
 def generate_verification(packet_data):
     verification = 0x00
     packet_bytes = bytearray.fromhex(packet_data)
-    packet_bytes.reverse()
     for byte in packet_bytes:
         verification = (verification + byte)
     verification = f"{(verification % 0x100):02x}"
@@ -349,13 +363,19 @@ def generate_key_rgb_packets(keys_color):
 
 # Set light pattern
 def set_pattern(pattern_val, brightness_val, speed_val, direction_val, color = "000000"):
-    send_data(bytes.fromhex(generate_pattern_packet(LIGHT_PATTERNS[pattern_val], brightness_val, speed_val, direction_val, color)))
+    send_data(bytes.fromhex(generate_pattern_packet(RGB_PATTERNS[pattern_val], brightness_val, speed_val, direction_val, color)))
 
-# Set key RGB
+# Set individual key RGB
 def set_keys_color(keys_color):
     for packet_data in generate_key_rgb_packets(keys_color):
         send_data(bytes.fromhex(packet_data))
         time.sleep(0.1)
+
+# HELP!
+def show_help():
+    global parser, show_help
+    if (show_help):
+        parser.print_help()
 
 # Run the program
 def run_program():
@@ -363,7 +383,7 @@ def run_program():
     setup_device()
     
     if (len(keys_color) > 0):
-        set_pattern('Custom', brightness, speed, direction)
+        set_pattern('custom', brightness, speed, direction)
         set_keys_color(keys_color)
     elif (pattern != None):
         set_pattern(pattern, brightness, speed, direction, color)
