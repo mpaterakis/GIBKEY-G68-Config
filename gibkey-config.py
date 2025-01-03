@@ -262,11 +262,7 @@ def parse_args():
 
     # Process config
     config_output = args.config_output
-<<<<<<< HEAD
     config_input = args.config_input
-=======
-    config_input = args.config_output
->>>>>>> a50f377578c9eb4de57b53a65f8a9068e8d91f30
 
     return (pattern, brightness, color, direction, speed, key_color, key_map, config_output, config_input)
 
@@ -540,11 +536,7 @@ def set_key_map(key_map):
         time.sleep(0.2)
 
 # Load config from JSON file
-<<<<<<< HEAD
 def load_config(pattern, brightness, color, direction, speed, key_map, key_color, config_input):
-=======
-def load_config(key_map, key_color, config_input):
->>>>>>> a50f377578c9eb4de57b53a65f8a9068e8d91f30
     with open(config_input, "r") as input_file:
         json_file = json.load(input_file)
         
@@ -558,7 +550,6 @@ def load_config(key_map, key_color, config_input):
             for index, key in enumerate(json_file["key_color"]):
                 if key not in key_color:
                     key_color[key] = json_file["key_color"][key]
-<<<<<<< HEAD
         if "pattern" in json_file and pattern is None:
             pattern = json_file["pattern"]
         
@@ -574,12 +565,6 @@ def save_config(pattern, brightness, color, direction, speed, key_map, key_color
     if pattern != None:
         config["pattern"] = pattern
 
-=======
-
-# Save config to JSON file
-def save_config(key_map, key_color, config_output):
-    config = {"key_color": key_color, "key_map": key_map}
->>>>>>> a50f377578c9eb4de57b53a65f8a9068e8d91f30
     with open(config_output, "w") as json_file:
         json.dump(config, json_file, indent=2)
 
@@ -589,12 +574,7 @@ def run_program():
     setup_device()
 
     if (config_input != None):
-<<<<<<< HEAD
         pattern, brightness, color, direction, speed, key_map, key_color = load_config(pattern, brightness, color, direction, speed, key_map, key_color, config_input)
-=======
-        load_config(key_map, key_color, config_input)
-        print(key_map, key_color)
->>>>>>> a50f377578c9eb4de57b53a65f8a9068e8d91f30
 
     if (len(key_map) > 0):
         set_key_map(key_map)
@@ -606,11 +586,7 @@ def run_program():
         set_pattern(pattern, brightness, speed, direction, color)
 
     if (config_output != None):
-<<<<<<< HEAD
         save_config(pattern, brightness, color, direction, speed, key_map, key_color, config_output)
-=======
-        save_config(key_map, key_color, config_output)
->>>>>>> a50f377578c9eb4de57b53a65f8a9068e8d91f30
 
 
 # Run the main functionality
