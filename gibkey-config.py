@@ -2,6 +2,7 @@ import usb.core
 import usb.util
 import time
 import argparse
+import json
 
 RGB_PATTERNS = {
     'custom': 0,
@@ -181,18 +182,24 @@ def parse_args():
         help="Set animation speed (1-5)."
     )
     parser.add_argument(
-        "-kc", "--key_color", type=str, nargs='+', metavar="[key=color]",
+        "-kc", "--key-color", type=str, nargs='+', metavar="[key=color]",
         help="Set inidividual key rgb (key=color). For example '-kc a=ffffff b=000000 enter=010101'"
     )
     parser.add_argument(
-        "-km", "--key_map", type=str, nargs='+', metavar="[key=mapped_key]",
+        "-km", "--key-map", type=str, nargs='+', metavar="[key=mapped_key]",
         help="Set inidividual key map (key=mapped_key). For FN mappings, append _fn to the key name. For example '-km a=up b=escape x=u pageup_fn=home'."
     )
     parser.add_argument(
-        "--list_keys", action='store_true', help="List all usable key names."
+        "--list-keys", action='store_true', help="List all usable key names."
     )
     parser.add_argument(
-        "--list_patterns", action='store_true', help="List all usable pattern names."
+        "--list-patterns", action='store_true', help="List all usable pattern names."
+    )
+    parser.add_argument(
+        "-o", "--config-output", type=str, metavar="<filepath>", help="Save the given config in a JSON file."
+    )
+    parser.add_argument(
+        "-i", "--config-input", type=str, metavar="<filepath>", help="Load the config from a JSON file."
     )
 
     args = parser.parse_args()
@@ -253,7 +260,11 @@ def parse_args():
         speed = 2
     speed = 5 - speed
 
-    return (pattern, brightness, color, direction, speed, key_color, key_map)
+    # Process config
+    config_output = args.config_output
+    config_input = args.config_output
+
+    return (pattern, brightness, color, direction, speed, key_color, key_map, config_output, config_input)
 
 # List usable keys
 def list_keys():
@@ -524,11 +535,37 @@ def set_key_map(key_map):
         send_data(bytes.fromhex(packet_data))
         time.sleep(0.2)
 
+# Load config from JSON file
+def load_config(key_map, key_color, config_input):
+    with open(config_input, "r") as input_file:
+        json_file = json.load(input_file)
+        
+        # Add the stored values to the given key_map and key_color object.
+        # Config values don't override ones already in key_map and key_color.
+        if "key_map" in json_file:
+            for index, key in enumerate(json_file["key_map"]):
+                if key not in key_map:
+                    key_map[key] = json_file["key_map"][key]
+        if "key_color" in json_file:
+            for index, key in enumerate(json_file["key_color"]):
+                if key not in key_color:
+                    key_color[key] = json_file["key_color"][key]
+
+# Save config to JSON file
+def save_config(key_map, key_color, config_output):
+    config = {"key_color": key_color, "key_map": key_map}
+    with open(config_output, "w") as json_file:
+        json.dump(config, json_file, indent=2)
+
 # Run the program
 def run_program():
-    pattern, brightness, color, direction, speed, key_color, key_map = parse_args()
+    pattern, brightness, color, direction, speed, key_color, key_map, config_output, config_input = parse_args()
     setup_device()
-    
+
+    if (config_input != None):
+        load_config(key_map, key_color, config_input)
+        print(key_map, key_color)
+
     if (len(key_map) > 0):
         set_key_map(key_map)
 
@@ -537,6 +574,10 @@ def run_program():
         set_keys_color(key_color)
     elif (pattern != None):
         set_pattern(pattern, brightness, speed, direction, color)
+
+    if (config_output != None):
+        save_config(key_map, key_color, config_output)
+
 
 # Run the main functionality
 run_program()
