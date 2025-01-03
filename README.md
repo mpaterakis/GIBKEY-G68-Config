@@ -5,7 +5,8 @@ A configuration tool for GIBKEY G68 keyboards. Remapping and RGB functions are f
 1. Download `gibkey-config.py` [from the releases section](https://github.com/mpaterakis/GIBKEY-G68-Config/releases/latest).
 2. Place [libusb's DLL](https://github.com/libusb/libusb/releases/latest) in your python directory (next to python.exe/python3.exe).
 3. Install `pyusb` using pip.
-4. Run the python file (`python gibkey-config.py <arguments>`) using the following arguments:
+4. Connect the keyboard and make sure it's in wired mode (FN+Y)
+5. Run the python file (`python gibkey-config.py <arguments>`) using the following arguments:
 ```
   -h, --help            show this help message and exit
   -s, --silent          Shoosh.
