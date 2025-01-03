@@ -22,110 +22,127 @@ RGB_PATTERNS = {
     'cell': 16
 }
 
-KEY_INDEXES = {
-    'esc': 0,
-    'tilde': 1,
-    'tab': 2,
-    'capslock': 3,
-    'lshift': 4,
-    'lctrl': 5,
-    'unknown1': 6,
-    '1': 7,
-    'q': 8,
-    'a': 9,
-    'z': 10,
-    'lwin': 11,
-    'unknown2': 12,
-    '2': 13,
-    'w': 14,
-    's': 15,
-    'x': 16,
-    'lalt': 17, 
-    'unknown3': 18,
-    '3': 19,
-    'e': 20,
-    'd': 21,
-    'c': 22,
-    'unknown4': 23,
-    'unknown5': 24,
-    '4': 25,
-    'r': 26,
-    'f': 27,
-    'v': 28,
-    'unknown6': 29,
-    'unknown7': 30,
-    '5': 31,
-    't': 32,
-    'g': 33,
-    'b': 34,
-    'space': 35,
-    'unknown9': 36,
-    '6': 37,
-    'y': 38,
-    'h': 39,
-    'n': 40,
-    'unknown10': 41,
-    'unknown11': 42,
-    '7': 43,
-    'u': 44,
-    'j': 45,
-    'm': 46,
-    'unknown12': 47,
-    'unknown13': 48,
-    '8': 49,
-    'i': 50,
-    'k': 51,
-    'comma': 52,
-    'unknown14': 53,
-    'unknown15': 54,
-    '9': 55,
-    'o': 56,
-    'l': 57,
-    'period': 58,
-    'unknown16': 59,
-    'unknown17': 60,
-    '0': 61,
-    'p': 62,
-    'semicolon': 63,
-    'slash': 64,
-    'lalt': 65,
-    'unknown18': 66,
-    'unknown19': 67,
-    'minus': 68,
-    'lbracket': 69,
-    'quote': 70,
-    'unknown20': 71,
-    'unknown21': 72,
-    'unknown22': 73,
-    'plus': 74,
-    'rbracket': 75,
-    'unknown23': 76,
-    'rshift': 77,
-    'fn': 78,
-    'unknown24': 79,
-    'backspace': 80,
-    'backslash': 81,
-    'enter': 82,
-    'unknown25': 83,
-    'rctrl': 84,
-    'unknown26': 85,
-    'unknown27': 86,
-    'delete': 87,
-    'unknown28': 88,
-    'unknown29': 89,
-    'left': 90,
-    'unknown31': 91,
-    'unknown32': 92,
-    'unknown33': 93,
-    'unknown34': 94,
-    'up': 95,
-    'down': 96,
-    'unknown35': 97,
-    'pageup': 98,
-    'pagedown': 99,
-    'unknown36': 100,
-    'unknown37': 101,
-    'right': 102
+KEY_CODES_SORTED = {
+    'escape': 0x29,
+    'tilde': 0x35,
+    'tab': 0x2B,
+    'capslock': 0x39,
+    'lshift': 0xE1,
+    'lctrl': 0xE0,
+    'f1': 0x3A,
+    '1': 0x1E,
+    'q': 0x14,
+    'a': 0x04,
+    'z': 0x1D,
+    'lwin': 0xE3,
+    'f2': 0x3B,
+    '2': 0x1F,
+    'w': 0x1A,
+    's': 0x16,
+    'x': 0x1B,
+    'lalt': 0xE2,
+    'f3': 0x3C,
+    '3': 0x20,
+    'e': 0x08,
+    'd': 0x07,
+    'c': 0x06,
+    'unknown1': 0x00,
+    'f4': 0x3D,
+    '4': 0x21,
+    'r': 0x15,
+    'f': 0x09,
+    'v': 0x19,
+    'unknown2': 0x00,
+    'f5': 0x3E,
+    '5': 0x22,
+    't': 0x17,
+    'g': 0x0A,
+    'b': 0x05,
+    'space': 0x2C,
+    'f6': 0x3F,
+    '6': 0x23,
+    'y': 0x1C,
+    'h': 0x0B,
+    'n': 0x11,
+    'unknown3': 0x00,
+    'f7': 0x40,
+    '7': 0x24,
+    'u': 0x18,
+    'j': 0x0D,
+    'm': 0x10,
+    'unknown4': 0x00,
+    'f8': 0x41,
+    '8': 0x25,
+    'i': 0x0C,
+    'k': 0x0E,
+    'comma': 0x36,
+    'unknown5': 0x00,
+    'f9': 0x42,
+    '9': 0x26,
+    'o': 0x12,
+    'l': 0x0F,
+    'period': 0x37,
+    'unknown6': 0x00,
+    'f10': 0x43,
+    '0': 0x27,
+    'p': 0x13,
+    'semicolon': 0x33,
+    'slash': 0x38,
+    'ralt': 0xE6,
+    'f11': 0x44,
+    'dash': 0x2D,
+    'lbracket': 0x2F,
+    'quote': 0x34,
+    'unknown7': 0x00,
+    'unknown8': 0x00,
+    'f12': 0x45,
+    'equals': 0x2E,
+    'rbracket': 0x30,
+    'unknown9': 0x00,
+    'rshift': 0xE5,
+    'fn': 0x00,
+    'unknown10': 0x00,
+    'backspace': 0x2A,
+    'backslash': 0x31,
+    'enter': 0x28,
+    'unknown11': 0x00,
+    'rctrl': 0xE4,
+    'unknown12': 0x00,
+    'unknown13': 0x00,
+    'delete': 0x4C,
+    'unknown14': 0x00,
+    'unknown15': 0x00,
+    'left': 0x50,
+    'unknown16': 0x00,
+    'print_screen': 0x46,
+    'pause': 0x48,
+    'scroll_lock': 0x47,
+    'up': 0x52,
+    'down': 0x51,
+    'insert': 0x49,
+    'pageup': 0x4B,
+    'pagedown': 0x4E,
+    'home': 0x4A,
+    'end': 0x4D,
+    'right': 0x4F,
+    'function_toggle_rgb': 0xf03c00,
+    'function_swap_wasd': 0xF00300,
+    'function_change_keyboard_index': 0xF05200,
+    'function_change_rgb_color': 0xf02b00,
+    'function_change_rgb_pattern': 0xf01000,
+    'function_increase_rgb_brightness': 0xf02500,
+    'function_decrease_rgb_brightness': 0xf02600,
+    'function_make_rgb_faster': 0xf02700,
+    'function_make_rgb_slower': 0xf01800,
+    'function_toggle_charging_light': 0xf05100,
+    'function_bt_matching_2': 0xf04002,
+    'function_bt_matching_3': 0xf04003,
+    'function_reset_settings': 0xf02c00,
+    'function_bt_matching_1': 0xf04001,
+    'function_mac_mode': 0xf00500,
+    'function_windows_mode': 0xf00600,
+    'function_enter_wired_mode': 0xf04004,
+    'function_enter_wireless_mode': 0xf04000,
 }
 
 # Constants for vendor and product IDs
@@ -139,7 +156,7 @@ silent = False
 
 def parse_args():
     global parser
-    parser = argparse.ArgumentParser(description="Configure your GIBKEY G68 to your heart's desire")
+    parser = argparse.ArgumentParser(description="Fully configure your GIBKEY G68")
     parser.add_argument(
         "-s", "--silent", action='store_true', help="Shoosh."
     )
@@ -164,8 +181,12 @@ def parse_args():
         help="Set animation speed (1-5)."
     )
     parser.add_argument(
-        "-kc", "--keys_color", type=str, nargs='+', metavar="[key=color]",
+        "-kc", "--key_color", type=str, nargs='+', metavar="[key=color]",
         help="Set inidividual key rgb (key=color). For example '-kc a=ffffff b=000000 enter=010101'"
+    )
+    parser.add_argument(
+        "-km", "--key_map", type=str, nargs='+', metavar="[key=mapped_key]",
+        help="Set inidividual key map (key=mapped_key). For FN mappings, append _fn to the key name. For example '-km a=up b=escape x=u pageup_fn=home'."
     )
     parser.add_argument(
         "--list_keys", action='store_true', help="List all usable key names."
@@ -186,13 +207,24 @@ def parse_args():
     elif (args.list_patterns):
         list_patterns()
 
-    # Process keys_color
-    keys_color = {}
-    if (args.keys_color != None):
+    # Process key_color
+    key_color = {}
+    if (args.key_color != None):
         try:
-            keys_color = dict(pair.split('=') for pair in args.keys_color)
+            key_color = dict(pair.split('=') for pair in args.key_color)
         except:
-            ValueError(f"Error: keys_color is not valid.")
+            ValueError(f"Error: key_color is not valid.")
+
+    # Process key_map
+    key_map = {}
+    if (args.key_map != None):
+        try:
+            if "default" in args.key_map:
+                key_map = {"default"}
+            else:
+                key_map = dict(pair.split('=') for pair in args.key_map)
+        except:
+            ValueError(f"Error: key_map is not valid.")
 
     # Process pattern
     pattern = args.pattern
@@ -221,14 +253,15 @@ def parse_args():
         speed = 2
     speed = 5 - speed
 
-    return (pattern, brightness, color, direction, speed, keys_color)
+    return (pattern, brightness, color, direction, speed, key_color, key_map)
 
 # List usable keys
 def list_keys():
-    for index, key in enumerate(KEY_INDEXES):
-        if ('unknown' not in key): 
+    for index, key in enumerate(KEY_CODES_SORTED):
+        if "unknown" not in key and "function" not in key: 
             print(key)
-    print("all (fallback color for all unspecified keys)")
+    print("all [RGB ONLY] Fallback color for all unspecified keys")
+    print("default [REMAP ONLY] Reset all keys to default")
 
 # List usable patterns
 def list_patterns():
@@ -274,7 +307,7 @@ def setup_device():
 def send_data(data):
     global device, out_endpoint, silent
     retries = 5
-    timeout = 1000
+    timeout = 1500
     for attempt in range(retries):
         try:
             device.write(out_endpoint.bEndpointAddress, data, timeout=timeout)
@@ -300,6 +333,29 @@ def generate_verification(packet_data):
     verification = f"{(verification % 0x100):02x}"
 
     return verification
+
+# Split the string into different packets
+def split_data_into_packets(data, header):
+    packets = []
+    current_data_length = 0
+
+    # Split data into parts
+    parts = [data[i:i + 112] for i in range(0, len(data), 112)]
+    if len(parts[-1]) < 112:
+        parts[-1] = parts[-1].ljust(112, '0')  # Pad with '0' if less than 112
+
+    # Generate the packets using the header, signature, size and data parts
+    for part in parts:
+        first_index_byte = int(current_data_length/0x100)
+        second_index_byte = (current_data_length % 0x100)
+        packet_data = f"38{second_index_byte:02x}{first_index_byte:02x}00{part}"
+
+        verification = generate_verification(packet_data)
+        packet = f"{header}{verification}{packet_data}"
+        packets.append(packet)
+        current_data_length = current_data_length + 0x38
+    
+    return packets
 
 # Generate the pattern packet
 def generate_pattern_packet(pattern_int, brightness_int, speed_int, direction_int, color):
@@ -330,34 +386,125 @@ def generate_pattern_packet(pattern_int, brightness_int, speed_int, direction_in
     return packet
 
 # Generate the packets for indivual key RGB
-def generate_key_rgb_packets(keys_color):
-    packets = []
+def generate_key_rgb_packets(key_color):
     current_data_length = 0
 
     # Create hex string with RGB values for each key
     data = ""
-    for index, key in enumerate(KEY_INDEXES):
+    for index, key in enumerate(KEY_CODES_SORTED):
         color = "000000"
-        if key in keys_color:
-            color = keys_color[key]
-        elif 'all' in keys_color:
-            color = keys_color['all']
+        if key in key_color:
+            color = key_color[key]
+        elif 'all' in key_color:
+            color = key_color['all']
         data += color
     
-    # Split the string into different packets
-    parts = [data[i:i + 112] for i in range(0, len(data), 112)]
-    if len(parts[-1]) < 112:
-        parts[-1] = parts[-1].ljust(112, '0')  # Pad with '0' if less than 112
+    packets = split_data_into_packets(data, "550b00")
 
-    for part in parts:
-        first_index_byte = int(current_data_length/0x100)
-        second_index_byte = (current_data_length % 0x100)
-        packet_data = f"38{second_index_byte:02x}{first_index_byte:02x}00{part}"
+    return packets
 
-        verification = generate_verification(packet_data)
-        packet = f"550b00{verification}{packet_data}"
-        packets.append(packet)
-        current_data_length = current_data_length + 0x38
+# Generate the packets for indivual key remaps
+def generate_key_map_packets(key_map):
+
+    # Create hex string with keymap values for each key
+    data = ""
+    for index, key in enumerate(KEY_CODES_SORTED):
+        data += "1000"
+        mapped_key = key
+
+        # Ignore functions
+        if "function" in key:
+            mapped_key = "unknown1"
+            
+        if "default" not in key_map and key in key_map:
+            mapped_key = key_map[key] # Set remap value
+        data += f"{KEY_CODES_SORTED[mapped_key]:02X}"
+
+        divider = "1000"
+
+        # Apply default FN layer values
+        if key in ["1", "2", "3", "4", "5", "6", "7", "8", "9"]:
+            mapped_key = "f" + key
+        elif key == "0":
+            mapped_key = "f10"
+        elif key == "dash":
+            mapped_key = "f11"
+        elif key == "equals":
+            mapped_key = "f12"
+        elif key == "rbracket":
+            mapped_key = "end"
+        elif key == "lbracket":
+            mapped_key = "home"
+        elif key == "delete":
+            mapped_key = "insert"
+        elif key == "pageup":
+            mapped_key = "pause"
+        elif key == "pagedown":
+            mapped_key = "scroll_lock"
+        elif key == "tilde":
+            mapped_key = "print_screen"
+        elif key == "p":
+            mapped_key = "function_toggle_rgb"
+            divider = ""
+        elif key == "left":
+            mapped_key = "function_make_rgb_slower"
+            divider = ""
+        elif key == "right":
+            mapped_key = "function_make_rgb_faster"
+            divider = ""
+        elif key == "up":
+            mapped_key = "function_increase_rgb_brightness"
+            divider = ""
+        elif key == "down":
+            mapped_key = "function_decrease_rgb_brightness"
+            divider = ""
+        elif key == "backslash":
+            mapped_key = "function_change_rgb_pattern"
+            divider = ""
+        elif key == "tab":
+            mapped_key = "function_change_rgb_color"
+            divider = ""
+        elif key == "w":
+            mapped_key = "function_swap_wasd"
+            divider = ""
+        elif key == "space":
+            mapped_key = "function_change_keyboard_index"
+            divider = ""
+        elif key == "l":
+            mapped_key = "function_toggle_charging_light"
+            divider = ""
+        elif key == "e":
+            mapped_key = "function_bt_matching_1"
+            divider = ""
+        elif key == "r":
+            mapped_key = "function_bt_matching_2"
+            divider = ""
+        elif key == "t":
+            mapped_key = "function_bt_matching_3"
+            divider = ""
+        elif key == "escape":
+            mapped_key = "function_reset_settings"
+            divider = ""
+        elif key == "period":
+            mapped_key = "function_mac_mode"
+            divider = ""
+        elif key == "comma":
+            mapped_key = "function_windows_mode"
+            divider = ""
+        elif key == "y":
+            mapped_key = "function_enter_wired_mode"
+            divider = ""
+        elif key == "q":
+            mapped_key = "function_enter_wireless_mode"
+            divider = ""
+        
+        # Set FN layer value
+        if "default" not in key_map and f"{key}_fn" in key_map:
+            mapped_key = key_map[f"{key}_fn"]
+            divider = "1000"
+        data += divider + f"{KEY_CODES_SORTED[mapped_key]:02X}"
+
+    packets = split_data_into_packets(data, "550900")
 
     return packets
 
@@ -366,45 +513,30 @@ def set_pattern(pattern_val, brightness_val, speed_val, direction_val, color = "
     send_data(bytes.fromhex(generate_pattern_packet(RGB_PATTERNS[pattern_val], brightness_val, speed_val, direction_val, color)))
 
 # Set individual key RGB
-def set_keys_color(keys_color):
-    for packet_data in generate_key_rgb_packets(keys_color):
+def set_keys_color(key_color):
+    for packet_data in generate_key_rgb_packets(key_color):
         send_data(bytes.fromhex(packet_data))
-        time.sleep(0.1)
+        time.sleep(0.2)
 
-# HELP!
-def show_help():
-    global parser, show_help
-    if (show_help):
-        parser.print_help()
+# Set inidividual key mappings
+def set_key_map(key_map):
+    for packet_data in generate_key_map_packets(key_map):
+        send_data(bytes.fromhex(packet_data))
+        time.sleep(0.2)
 
 # Run the program
 def run_program():
-    pattern, brightness, color, direction, speed, keys_color = parse_args()
+    pattern, brightness, color, direction, speed, key_color, key_map = parse_args()
     setup_device()
     
-    if (len(keys_color) > 0):
+    if (len(key_map) > 0):
+        set_key_map(key_map)
+
+    if (len(key_color) > 0):
         set_pattern('custom', brightness, speed, direction)
-        set_keys_color(keys_color)
+        set_keys_color(key_color)
     elif (pattern != None):
         set_pattern(pattern, brightness, speed, direction, color)
 
 # Run the main functionality
 run_program()
-
-# Pattern-setting packets
-# 550600 {verification} 2000000002aa {pattern}{brightness} {speed}{direction}{use_default_color}00 {color} 0000ff00000400000100000000ffffffffffffffff000000000000000000000000000000000000000000000000
-# 550600 f0             2000000002aa 001e                  01000100                                38e3ed  0000ff00000400000100000000ffffffffffffffff000000000000000000000000000000000000000000000000
-# 550600 32             2000000002aa 1664                  01000000                                f0fe01  0000ff00000400000100000000ffffffffffffffff000000000000000000000000000000000000000000000000
-# 550600 34             2000000002aa 065c                  01000100                                38e3ed  0000ff00000400000100000000ffffffffffffffff000000000000000000000000000000000000000000000000
-# 550600 35             2000000002aa 065c                  01010100                                38e3ed  0000ff00000400000100000000ffffffffffffffff000000000000000000000000000000000000000000000000
-# 550600 2f             2000000002aa 0664                  00000000                                ffffff  0000ff00000400000100000000ffffffffffffffff000000000000000000000000000000000000000000000000
-# 550600 35             2000000002aa 0664                  04010100                                ffffff  0000ff00000400000100000000ffffffffffffffff000000000000000000000000000000000000000000000000
-
-# Single key LED packets. 5 packets are sent, all containing a single hex of data split across different chunks, each with an offset index.
-# 550b00 56 {size} {offset} ffffff{rgb1}{rgb1}{rgb1}{rgb1}{rgb2}000000{rgb1}{rgb1}{rgb1}{rgb1}{rgb2}000000{rgb1}{rgb1}{rgb1}{rgb1}{rgb2}0000
-# 550b00 56 38     000000   ffffff{rgb1}{rgb1}{rgb1}{rgb1}{rgb2}000000{rgb1}{rgb1}{rgb1}{rgb1}{rgb2}000000{rgb1}{rgb1}{rgb1}{rgb1}{rgb2}0000
-# 550b00 47 38     380000   00{rgb1}{rgb1}{rgb1}{rgb1}000000000000{rgb1}{rgb1}{rgb1}{rgb1}000000000000{rgb1}{rgb1}{rgb1}{rgb1}{rgb1}0000007e
-# 550b00 83 38     700000   00ff{rgb1}{rgb1}{rgb1}000000000000{rgb1}{rgb1}{rgb1}{rgb1}000000000000{rgb1}{rgb1}{rgb1}{rgb1}000000000000{rgb1}
-# 550b00 3a 38     a80000   {rgb1}{rgb1}{rgb1}000000000000{rgb1}{rgb1}{rgb1}{rgb1}{rgb1}000000{rgb1}{rgb1}{rgb1}000000000000000000{rgb1}7e00
-# 550b00 33 38     e00000   ff000000{rgb1}{rgb1}000000{rgb1}{rgb1}{rgb1}000000{rgb2}000000000000{rgb1}000000000000{rgb2}00000000000000000000
-# 550b00 0e 38     180100   0000{rgb2}{rgb2}000000ff00fc{rgb1}000000000000{rgb2}000000000000000000000000000000000000000000000000000000000000
