@@ -303,7 +303,7 @@ def load_gui():
     key_map_label = tk.Label(key_map_frame, text="Mapping", **label_style)
     key_map_label.pack(side="left", padx=5)
     key_map_dropdown = ttk.Combobox(key_map_frame, values=key_button_values, style="TCombobox", state="readonly", width=15, name="map")
-    key_map_dropdown.bind("<<ComboboxSelected>>", set_rgb_key_map)
+    key_map_dropdown.bind("<<ComboboxSelected>>", set_key_map)
     key_map_dropdown.pack(side="right", ipadx=5)
 
     direction_dropdown.current(0)
@@ -314,7 +314,7 @@ def load_gui():
     key_fn_map_label = tk.Label(key_fn_map_frame, text="FN Mapping", **label_style)
     key_fn_map_label.pack(side="left", padx=5)
     key_fn_map_dropdown = ttk.Combobox(key_fn_map_frame, values=key_button_values, style="TCombobox", state="readonly", width=15, name="fn_map")
-    key_fn_map_dropdown.bind("<<ComboboxSelected>>", set_rgb_key_fn_map)
+    key_fn_map_dropdown.bind("<<ComboboxSelected>>", set_key_fn_map)
     key_fn_map_dropdown.pack(side="right", ipadx=5)
 
     key_rgb_frame = tk.Frame(key_buttons_frame, bg="#2E2E2E")
@@ -397,11 +397,11 @@ def set_key_rgb(gui_objects, target = None, rgb = None):
         target.config(foreground="white")
 
 # Set specific key's FN mapping
-def set_rgb_key_fn_map():
+def set_key_fn_map():
     print()
 
 # Set specific key's mapping
-def set_rgb_key_map():
+def set_key_map():
     print()
 
 # Adjust key fields and selected key based on currently selected pattern
@@ -496,6 +496,9 @@ def load_config_gui(gui_objects):
             if color == "default": color = color.capitalize()
             object.delete(0, "end")
             object.insert(0, color)
+            for button_object in gui_objects:
+                if "key_button_" in str(button_object) and hasattr(button_object, "selected"):
+                    set_key_rgb(gui_objects, button_object, color)
         elif "fn_map" == object_name:
             object.delete(0, "end")
             # object.insert(0, pattern)
