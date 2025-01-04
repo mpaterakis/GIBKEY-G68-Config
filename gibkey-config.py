@@ -325,7 +325,7 @@ def load_gui():
     key_rgb_field.pack(side="left")
     key_rgb_field.bind("<Button-1>", lambda event: open_color_picker(event, gui_objects))
     key_rgb_field.bind("<Return>", lambda event: open_color_picker(event, gui_objects))
-    key_rgb_field.bind("<KeyRelease>", lambda event: set_rgb_key_rgb(gui_objects))
+    key_rgb_field.bind("<KeyRelease>", lambda event: set_key_rgb(gui_objects))
 
     gui_objects.append(key_map_dropdown)
     gui_objects.append(key_fn_map_dropdown)
@@ -376,17 +376,25 @@ def select_button(key, gui_objects):
     rgb_field.insert(0, key_button.config("bg")[-1].replace("#", ""))
 
 # Set specific key's RGB
-def set_rgb_key_rgb(gui_objects):
-    selected_key = rgb = None
+def set_key_rgb(gui_objects, target = None, rgb = None):
     for object in gui_objects:
         object_name = str(object).rsplit(".", 1)[-1].replace(":", "")
-        if hasattr(object, "selected") and object.selected:
-            print(object)
-            selected_key = object
-        if "rgb" == object_name:
-            rgb = object
+        if target == None and hasattr(object, "selected") and object.selected:
+            target = object
+        if rgb == None and "rgb" == object_name:
+            rgb = object.get()
     
-    selected_key.config(background=f"#{rgb.get()}")
+    # Set key rgb
+    target.config(background=f"#{rgb}")
+    target.rgb = rgb
+
+    # Darken text if key is too light
+    r, g, b = int(rgb[0:2], 16), int(rgb[2:4], 16), int(rgb[4:6], 16)
+    luminance = (0.299 * r + 0.587 * g + 0.114 * b)
+    if luminance > 186:
+        target.config(foreground="black")
+    else:
+        target.config(foreground="white")
 
 # Set specific key's FN mapping
 def set_rgb_key_fn_map():
@@ -558,11 +566,13 @@ def open_color_picker(event, gui_objects = None):
         event.widget.insert(0, color_code)
     
     if "rgb" in str(event.widget):
-        set_rgb_key_rgb(gui_objects)
+        # Apply to selected key
+        set_key_rgb(gui_objects)
     elif "color" in str(event.widget) and gui_objects != None:
         for object in gui_objects:
             if "key_button_" in str(object) and hasattr(object, "selected"):
-                object.config(bg=f"#{color_code}")
+                # Apply to all keys
+                set_key_rgb(gui_objects, object, color_code)
 
 
 # Validate color value
