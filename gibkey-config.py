@@ -150,6 +150,7 @@ KEY_CODES_SORTED = {
 VENDOR_ID = 0x258A
 PRODUCT_ID = 0x0049
 
+default_gui_rgb = "ababab"
 device = None
 out_endpoint = None
 parser = None
@@ -270,7 +271,7 @@ def load_gui():
             width = special_keys.get(key, key_width)
             key_button = tk.Button(row_frame, text=key, width=int(width), command=lambda k=key: select_button(k, gui_objects), name=f"key_button_{get_key_id(key)}")
             key_button.pack(side="left", padx=key_spacing, ipady=12, pady=5)
-            key_button.config(background="#aBaBaB", foreground="white", font=("Arial", 12), borderwidth=0, activebackground="#a3a3a3", activeforeground="white", highlightthickness=4, relief="flat")
+            key_button.config(background=f"#{default_gui_rgb}", foreground="white", font=("Arial", 12), borderwidth=0, activebackground="#a3a3a3", activeforeground="white", highlightthickness=4, relief="flat")
             key_button.key_id = get_key_id(key)
             key_button.map = None
             key_button.fn_map = None
@@ -383,6 +384,8 @@ def set_key_rgb(gui_objects, target = None, rgb = None):
             target = object
         if rgb == None and "rgb" == object_name:
             rgb = object.get()
+    if rgb == "default":
+        rgb = default_gui_rgb
     
     # Set key rgb
     target.config(background=f"#{rgb}")
@@ -498,7 +501,7 @@ def load_config_gui(gui_objects):
             object.insert(0, color)
             for button_object in gui_objects:
                 if "key_button_" in str(button_object) and hasattr(button_object, "selected"):
-                    set_key_rgb(gui_objects, button_object, color)
+                    set_key_rgb(gui_objects, button_object, color.lower())
         elif "fn_map" == object_name:
             object.delete(0, "end")
             # object.insert(0, pattern)
@@ -567,6 +570,8 @@ def open_color_picker(event, gui_objects = None):
         color_code = color_value[1].replace("#","").lower()
         event.widget.delete(0, "end")
         event.widget.insert(0, color_code)
+    else:
+        return
     
     if "rgb" in str(event.widget):
         # Apply to selected key
