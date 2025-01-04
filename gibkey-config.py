@@ -8,7 +8,7 @@ if True:
 
 RGB_PATTERNS = {
     'custom': 0,
-    'runners_light': 1,
+    'runner_light': 1,
     'static': 3,
     'breathe': 4,
     'flower': 5,
@@ -157,6 +157,359 @@ out_endpoint = None
 parser = None
 silent = False
 
+###################
+## GUI functions ##
+###################
+
+# Show the GUI
+def load_gui():
+    import tkinter as tk
+    from tkinter import ttk
+
+    # Create main window
+    root = Tk()
+    root.title("GIBKEY G68 Config")
+
+    # Set style
+    label_style, entry_style = set_gui_style(root)
+
+    # Create an object that will hold all the entry values
+    gui_objects = []
+
+    # Add config buttons
+    buttons_frame = tk.Frame(root, bg="#2E2E2E")
+    buttons_frame.pack(pady=15, side="top")
+    load_config_button = ttk.Button(buttons_frame, text="Load Config", padding=5, command=lambda: load_config_gui(gui_objects), style="Custom.TButton")
+    load_config_button.pack(side="left", ipadx=15, padx=(0,10))
+    save_config_button = ttk.Button(buttons_frame, text="Save Config", padding=5, command=lambda: save_config_gui(gui_objects), style="Custom.TButton")
+    save_config_button.pack(side="left", ipadx=15, padx=(10,0))
+
+    # Create validation entries
+    validate_1_5 = root.register(lambda v: validate_range(v, 1, 5))
+    validate_0_100 = root.register(lambda v: validate_range(v, 0, 100))
+    validate_color_hex = root.register(validate_color)
+
+    # Create RGB fields
+    fields_frame = tk.Frame(root, bg="#2E2E2E")
+    fields_frame.pack(side="top", padx=5, pady=5, fill="y")
+
+    # Create pattern dropdown
+    pattern_values = []
+    for index, pattern in enumerate(RGB_PATTERNS):
+        pattern_values.append(pattern.replace("_"," ").title())
+
+    pattern_frame = tk.Frame(fields_frame, bg="#2E2E2E")
+    pattern_frame.pack(side="left", padx=10)
+    pattern_label = tk.Label(pattern_frame, text="Patern", **label_style)
+    pattern_label.pack(side="left", padx=5)
+    pattern_dropdown = ttk.Combobox(pattern_frame, values=pattern_values, style="TCombobox", state="readonly", width=15, name="pattern")
+    pattern_dropdown.current(1)
+    pattern_dropdown.pack(side="right", pady=(1,0))
+
+    # Create the text fields
+    for type in ["Brightness", "Color", "Speed"]:
+        # Create row and label
+        row_frame = tk.Frame(fields_frame, bg="#2E2E2E")
+        row_frame.pack(side="left", padx=10)
+        label = tk.Label(row_frame, text=type, **label_style)
+        label.pack(side="left", padx=5)
+
+        # Set validation, default value and action
+        validation_command = None
+        default_value = 0
+        if type == "Brightness":
+            validation_command=(validate_0_100, "%P")
+            default_value = 50
+        elif type == "Speed":
+            validation_command=(validate_1_5, "%P")
+            default_value = 3
+        elif type == "Color":
+            validation_command=(validate_color_hex, "%P")
+            default_value = "Default"
+
+        # Create field
+        entry = tk.Entry(row_frame, **entry_style, width=14, validate="key", validatecommand=validation_command, name=type.lower())
+        entry.insert(0, default_value)
+        entry.pack(side="left")
+
+        # Add binds to automatically re-apply default values
+        if type == "Color":
+            entry.bind("<Button-1>", lambda event: open_color_picker(event))
+            entry.bind("<Return>", lambda event: open_color_picker(event))
+            default_color_button = ttk.Button(row_frame, text="↺", style="Custom.TButton", width=2, command=lambda: set_default_value(gui_objects, "Color"))
+            default_color_button.pack(side="right", padx=(5,0))
+        elif type == "Brightness":
+            entry.bind("<FocusOut>", lambda event: set_default_value(gui_objects, "Brightness", "50", True))
+        elif type == "Speed":
+            entry.bind("<FocusOut>", lambda event: set_default_value(gui_objects, "Speed", "3", True))
+        
+        gui_objects.append(entry)
+        
+
+    direction_frame = tk.Frame(fields_frame, bg="#2E2E2E")
+    direction_frame.pack(side="left", padx=10)
+    direction_label = tk.Label(direction_frame, text="Direction", **label_style)
+    direction_label.pack(side="left", padx=5)
+    direction_dropdown = ttk.Combobox(direction_frame, values=["Normal", "Reverse"], style="TCombobox", state="readonly", width=15, name="direction")
+    direction_dropdown.current(0)
+    direction_dropdown.pack(side="right", pady=(1,0))
+
+    gui_objects.append(pattern_dropdown)
+    gui_objects.append(direction_dropdown)
+
+    # Keyboard layout
+    keyboard_frame = tk.Frame(root, bg="#2E2E2E")
+    keyboard_frame.pack(side="top", padx=20, pady=10)
+    keyboard_keys_buttons = [
+        ["Esc", "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "-", "=", "Backspace", "~"],
+        ["Tab", "Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P", "[", "]", "\\", "Del"],
+        ["CapsLock", "A", "S", "D", "F", "G", "H", "J", "K", "L", ";", "'", "Enter", "PU"],
+        ["LShift", "Z", "X", "C", "V", "B", "N", "M", ",", ".", "/", "RShift", "Up", "PD"],
+        ["LCtrl", "LWin", "LAlt", "Space", "RAlt", "Fn", "RCtrl", "Left", "Down", "Right"]
+    ]
+
+    # Button sizes
+    key_width = 5
+    key_spacing = 5
+    special_keys = {
+        "Backspace": 2 * (key_width) - 1,
+        "Tab": 1.5 * (key_width),
+        "\\": 1.5 * (key_width),
+        "CapsLock": 1.75 * (key_width),
+        "LShift": 2 * (key_width),
+        "Space": 7 * (key_width) + 1,
+        "Enter": 2.5 * (key_width),
+        "RShift": 1.75 * (key_width) + 2,
+        "LCtrl": 1.25 * (key_width),
+        "LWin": 1.25 * (key_width),
+        "LAlt": 1.25 * (key_width) + 1
+    }
+
+    # Add keyboard buttons
+    for row in keyboard_keys_buttons:
+        row_frame = tk.Frame(keyboard_frame, bg="#2E2E2E")
+        for key in row:
+            width = special_keys.get(key, key_width)
+            button = ttk.Button(row_frame, text=key, width=int(width), style="TButton", command=lambda k=key: select_button(k), name=get_key_id(key))
+            button.pack(side="left", padx=key_spacing, ipady=12, pady=5)
+        row_frame.pack()
+    
+    # Add per-key config buttons
+    key_config_frame = tk.Frame(root, bg="#2E2E2E")
+    key_config_frame.pack(pady=(0,10), side="bottom")
+    for type in ["Map:", "FN Map:", "RGB:"]:
+        row_frame = tk.Frame(key_config_frame, bg="#2E2E2E")
+        row_frame.pack(side="left", fill="x", pady=5)
+
+        label = tk.Label(row_frame, text=type, **label_style)
+        label.pack(side="left", padx=5)
+
+        entry = tk.Entry(row_frame, **entry_style, name=type.lower().replace(" ", "_"))
+        entry.pack(side="right", ipadx=5)
+
+        gui_objects.append(entry)
+
+    # Add bottom right buttons
+    bottom_right_buttons_frame = tk.Frame(key_config_frame, bg="#2E2E2E")
+    bottom_right_buttons_frame.pack(pady=5, padx=(45,0), side="right")
+    set_defaults_button = ttk.Button(bottom_right_buttons_frame, text="Default", padding=5, command=lambda k=key: set_default_key_value(k), style="Custom.TButton")
+    set_defaults_button.pack(side="left", ipadx=5, padx=5)
+    apply_changes_button = ttk.Button(bottom_right_buttons_frame, text="Apply", padding=5, command=lambda: apply_changes(gui_objects), style="Custom.TButton")
+    apply_changes_button.pack(side="right", ipadx=5, padx=5)
+    
+    # Run the gui
+    root.mainloop()
+
+# Apply changes from GUI
+def apply_changes(gui_objects):
+    pattern = brightness = speed = direction = color = map = fn_map = rgb = None
+    for object in gui_objects:
+        object_name = str(object).rsplit(".", 1)[-1].replace(":", "")
+        if "pattern" == object_name:
+            pattern = object.get().lower().replace(" ", "_")
+        elif "brightness" == object_name:
+            brightness = int(object.get())
+        elif "speed" == object_name:
+            speed = 5 - int(object.get())
+        elif "direction" == object_name:
+            direction = object.get().lower()
+        elif "color" == object_name:
+            color = f"{object.get().lower():0<6}"
+        elif "fn_map" == object_name:
+            fn_map = object.get()
+        elif "map" == object_name:
+            map = object.get()
+        elif "rgb" == object_name:
+            rgb = object.get()
+
+    print(pattern, brightness, speed, direction, color, map, fn_map, rgb)
+
+    set_pattern(pattern, brightness, speed, direction, color)
+
+# Load config from JSON file to GUI
+def load_config_gui(gui_objects):
+    import tkinter as tk
+    from tkinter import ttk
+    from tkinter import filedialog as fd
+    from tkinter.messagebox import showinfo
+
+    # Open file dialog
+    filename = fd.askopenfilename(title='Select a config file to load from', initialdir='./', filetypes=(('All files', '*.*'),))
+    if len(filename) < 1:
+        return
+    
+    # Load config
+    pattern, brightness, color, direction, speed, key_map, key_color = load_config(None, None, None, None, None, None, None, filename)
+
+    # Apply values to GUI
+    for object in gui_objects:
+        object_name = str(object).rsplit(".", 1)[-1].replace(":", "")
+        if "pattern" == object_name and pattern != None:
+            object.current(RGB_PATTERNS[pattern])
+        elif "brightness" == object_name and brightness != None:
+            object.delete(0, "end")
+            object.insert(0, str(brightness))
+        elif "speed" == object_name and speed != None:
+            object.delete(0, "end")
+            object.insert(0, 5 - speed)
+        elif "direction" == object_name and direction != None:
+            object.delete(0, "end")
+            if direction.lower() == "normal":
+                object.current(0)
+            elif direction.lower() == "reverse":
+                object.current(1)
+        elif "color" == object_name and color != None:
+            if color == "default": color = color.capitalize()
+            object.delete(0, "end")
+            object.insert(0, color)
+        elif "fn_map" == object_name:
+            object.delete(0, "end")
+            # object.insert(0, pattern)
+        elif "map" == object_name:
+            object.delete(0, "end")
+            # object.insert(0, pattern)
+        elif "rgb" == object_name:
+            object.delete(0, "end")
+            # object.insert(0, pattern)
+
+# Save config to JSON file to GUI
+def save_config_gui(gui_objects):
+    import tkinter as tk
+    from tkinter import ttk
+    from tkinter import filedialog as fd
+    from tkinter.messagebox import showinfo
+
+    # Open file dialog
+    filename = fd.asksaveasfilename(title='Select a config file to save to', initialdir='./', filetypes=(('JSON', '*.json'),), initialfile="config.json")
+    if len(filename) < 1:
+        return
+    
+    # Get values
+    for object in gui_objects:
+        object_name = str(object).rsplit(".", 1)[-1].replace(":", "")
+        if "pattern" == object_name:
+            pattern = object.get().lower().replace(" ", "_")
+        elif "brightness" == object_name:
+            brightness = int(object.get())
+        elif "speed" == object_name:
+            speed = 5 - int(object.get())
+        elif "direction" == object_name:
+            direction = object.get().lower()
+        elif "color" == object_name:
+            color = f"{object.get().lower():0<6}"
+        elif "fn_map" == object_name:
+            fn_map = object.get()
+        elif "map" == object_name:
+            map = object.get()
+        elif "rgb" == object_name:
+            rgb = object.get()
+    
+    # Save config file
+    save_config(pattern, brightness, color, direction, speed, {}, {}, filename)
+
+# Set default value on target
+def set_default_value(gui_objects, target, default = "Default", only_if_empty = False):
+    for object in gui_objects:
+        if target.lower() in str(object).lower().rsplit(".", 1)[-1].replace(":", ""):
+            if only_if_empty and len(object.get()) > 0:
+                return
+            object.delete(0, "end")
+            object.insert(0, default)
+
+# Open color picker and select a color
+def open_color_picker(event):
+    from tkinter import colorchooser
+    color_value = colorchooser.askcolor(title ="Choose color")
+
+    if color_value[1] != None:
+        color_code = color_value[1].replace("#","").lower()
+        event.widget.delete(0, "end")
+        event.widget.insert(0, color_code)
+
+# Validate color value
+def validate_color(value):
+    if value == "" or value.lower() == "default":  # Hack for backspace/delete
+        return True
+    return all(c in "0123456789abcdefABCDEF" for c in value) and len(value) <= 6
+
+# Validate range value
+def validate_range(value, min_val, max_val):
+    if value == "":  # Hack for backspace/delete
+        return True
+    if value.isdigit():
+        return min_val <= int(value) <= max_val
+    return False
+
+# Set GUI's styling
+def set_gui_style(root):
+    from tkinter import ttk
+
+    root.configure(bg="#2E2E2E")
+    root.resizable(False,False)
+    label_style = {"bg": "#2E2E2E", "fg": "#FFFFFF", "font": ("Arial", 12)}
+    entry_style = {"bg": "#3C3C3C", "fg": "#FFFFFF", "insertbackground": "#FFFFFF", "highlightbackground": "#5A5A5A", "relief": "flat"}
+    style = ttk.Style()
+    style.theme_use("clam")
+    style.configure("TButton", background="#4CAF50", foreground="#FFFFFF", font=("Arial", 12), padding=0, borderwidth=0)
+    style.configure("Custom.TButton", background="#e32d52", foreground="#FFFFFF", font=("Arial", 12), padding=0, borderwidth=0)
+    style.configure("TCombobox", fieldbackground="#3C3C3C", background="#3C3C3C", foreground="white", relief="flat", selectbackground=None, selectforeground=None)
+    style.map("TButton", background=[("active", "#45A049"), ("pressed", "#3E8E41")], foreground=[("disabled", "#808080")])
+    style.map("Custom.TButton", background=[("active", "#e33659"), ("pressed", "#e33659")], foreground=[("disabled", "#808080")])
+    style.map("TCombobox", bordercolor="#3C3C3C", highlightbackground="#3C3C3C", fieldbackground="#3C3C3C")
+
+    return (label_style, entry_style)
+
+# Get a key id from its name
+def get_key_id(key_name):
+    key_name = key_name.lower()
+    if key_name == "esc": key_name = "escape"
+    if key_name == "\\": key_name = "backslash"
+    if key_name == "/": key_name = "slash"
+    if key_name == "~": key_name = "tilde"
+    if key_name == "PU": key_name = "pageup"
+    if key_name == "PD": key_name = "pagedown"
+    if key_name == ",": key_name = "comma"
+    if key_name == ".": key_name = "period"
+    if key_name == "[": key_name = "lbracket"
+    if key_name == "]": key_name = "rbracket"
+    if key_name == "-": key_name = "dash"
+    if key_name == "=": key_name = "equals"
+    if key_name == ";": key_name = "semicolon"
+    if key_name == "''": key_name = "quote"
+
+    return key_name
+
+# Select a button and show its details on the GUI
+def select_button(key):
+    key_id = get_key_id(key)
+    print(key_id)
+
+
+###################
+## CLI functions ##
+###################
+
+# Parse arguments
 def parse_args():
     global parser
     parser = argparse.ArgumentParser(description="Fully configure your GIBKEY G68")
@@ -371,7 +724,7 @@ def split_data_into_packets(data, header):
     return packets
 
 # Generate the pattern packet
-def generate_pattern_packet(pattern_int, brightness_int, speed_int, direction_int, color):
+def generate_pattern_packet(pattern_int, brightness_int, speed_int, direction_val, color):
     brightness = f"{brightness_int:02x}"
     pattern = f"{pattern_int:02x}"
 
@@ -384,7 +737,12 @@ def generate_pattern_packet(pattern_int, brightness_int, speed_int, direction_in
         raise ValueError("Color value is invalid")
 
     # Set direction value
-    direction = f"{direction_int:02x}"
+    direction = None
+    if direction_val == "normal":
+        direction_val = 0
+    elif direction_val == "reverse":
+        direction_val = 1
+    direction = f"{direction_val:02x}"
     
     # Set speed value
     speed = f"{speed_int:02x}"
@@ -554,6 +912,14 @@ def load_config(pattern, brightness, color, direction, speed, key_map, key_color
                     key_color[key] = json_file["key_color"][key]
         if "pattern" in json_file and pattern is None:
             pattern = json_file["pattern"]
+        if "brightness" in json_file and brightness is None:
+            brightness = json_file["brightness"]
+        if "color" in json_file and color is None:
+            color = json_file["color"]
+        if "direction" in json_file and direction is None:
+            direction = json_file["direction"]
+        if "speed" in json_file and speed is None:
+            speed = json_file["speed"]
         
         return (pattern, brightness, color, direction, speed, key_map, key_color)
 
@@ -569,102 +935,6 @@ def save_config(pattern, brightness, color, direction, speed, key_map, key_color
 
     with open(config_output, "w") as json_file:
         json.dump(config, json_file, indent=2)
-
-# Show the GUI
-def load_gui():
-    import tkinter as tk
-    from tkinter import ttk
-
-    # Create main window
-    root = Tk()
-
-    # Create fields
-    root.title("GIBKEY G68 Config")
-    root.configure(bg="#2E2E2E")  # Set a dark background
-
-    # Create styles
-    label_style = {"bg": "#2E2E2E", "fg": "#FFFFFF", "font": ("Arial", 12)}
-    entry_style = {"bg": "#3C3C3C", "fg": "#FFFFFF", "insertbackground": "#FFFFFF", "highlightbackground": "#5A5A5A", "relief": "flat"}
-    style = ttk.Style()
-    style.theme_use("clam")  # Use a modern theme
-    style.configure(
-        "TButton",
-        background="#4CAF50",
-        foreground="#FFFFFF",
-        font=("Arial", 12),
-        padding=0,
-        borderwidth=0
-    )
-    style.map(
-        "TButton",
-        background=[("active", "#45A049"), ("pressed", "#3E8E41")],
-        foreground=[("disabled", "#808080")],
-    )
-
-    # Frame for fields on the left
-    fields_frame = tk.Frame(root, bg="#2E2E2E")
-    fields_frame.pack(side="left", padx=20, pady=20, fill="y")
-
-    # Add labels and fields
-    fields = []
-    for i in range(5):
-        row_frame = tk.Frame(fields_frame, bg="#2E2E2E")
-        row_frame.pack(fill="x", pady=5)
-
-        label = tk.Label(row_frame, text=f"Field {i+1}:", **label_style)
-        label.pack(side="left", padx=5)
-
-        entry = tk.Entry(row_frame, **entry_style)
-        entry.pack(side="left", fill="x", expand=True, padx=5)
-        fields.append(entry)
-
-    # Add config buttons
-    buttons_frame = tk.Frame(fields_frame, bg="#2E2E2E")
-    buttons_frame.pack(pady=10)
-    load_button = ttk.Button(buttons_frame, text="Load Config", padding=5)
-    load_button.pack(side="left", padx=20)
-    save_button = ttk.Button(buttons_frame, text="Save Config", padding=5)
-    save_button.pack(side="left", padx=20)
-
-    # Keyboard layout
-    keyboard_frame = tk.Frame(root, bg="#2E2E2E")
-    keyboard_frame.pack(side="left", padx=20, pady=20)
-    keyboard_buttons = [
-        ["Esc", "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "-", "=", "Backspace", "~"],
-        ["Tab", "Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P", "[", "]", "\\", "Del"],
-        ["CapsLock", "A", "S", "D", "F", "G", "H", "J", "K", "L", ";", "'", "Enter", "PU"],
-        ["LShift", "Z", "X", "C", "V", "B", "N", "M", ",", ".", "/", "RShift", "Up", "PD"],
-        ["LCtrl", "LWin", "LAlt", "Space", "RAlt", "Fn", "RCtrl", "Left", "Down", "Right"]
-    ]
-
-    # Button sizes
-    key_width = 5
-    key_spacing = 5
-    special_keys = {
-        "Backspace": 2 * (key_width) - 1,
-        "Tab": 1.5 * (key_width),
-        "\\": 1.5 * (key_width),
-        "CapsLock": 1.75 * (key_width),
-        "LShift": 2 * (key_width),
-        "Space": 7 * (key_width) + 1,
-        "Enter": 2.5 * (key_width),
-        "RShift": 1.75 * (key_width) + 2,
-        "LCtrl": 1.25 * (key_width),
-        "LWin": 1.25 * (key_width),
-        "LAlt": 1.25 * (key_width) + 1
-    }
-
-    # Add buttons to frame
-    for row in keyboard_buttons:
-        row_frame = tk.Frame(keyboard_frame, bg="#2E2E2E")
-        for key in row:
-            width = special_keys.get(key, key_width)
-            button = ttk.Button(row_frame, text=key, width=int(width), style="TButton")
-            button.pack(side="left", padx=key_spacing, ipady=12, pady=5)
-        row_frame.pack()
-
-    # Run the gui
-    root.mainloop()
 
 # Run the program
 def run_program():
