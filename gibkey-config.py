@@ -3,8 +3,6 @@ import usb.util
 import time
 import argparse
 import json
-if True:
-    from tkinter import *
 
 RGB_PATTERNS = {
     'custom': 0,
@@ -167,7 +165,7 @@ def load_gui():
     from tkinter import ttk
 
     # Create main window
-    root = Tk()
+    root = tk.Tk()
     root.title("GIBKEY G68 Config")
 
     # Set style
@@ -185,15 +183,12 @@ def load_gui():
     save_config_button.pack(side="left", ipadx=15, padx=(10,0))
 
     # Create validation entries
-    validate_1_5 = root.register(lambda v: validate_range(v, 1, 5))
-    validate_0_100 = root.register(lambda v: validate_range(v, 0, 100))
     validate_color_hex = root.register(validate_color)
 
-    # Create RGB fields
+    # Create top section
     fields_frame = tk.Frame(root, bg="#2E2E2E")
     fields_frame.pack(side="top", padx=5, pady=5, fill="y")
 
-    # Create pattern dropdown
     pattern_values = []
     for index, pattern in enumerate(RGB_PATTERNS):
         pattern_values.append(pattern.replace("_"," ").title())
@@ -206,46 +201,33 @@ def load_gui():
     pattern_dropdown.current(1)
     pattern_dropdown.pack(side="right", pady=(1,0))
 
-    # Create the text fields
-    for type in ["Brightness", "Color", "Speed"]:
-        # Create row and label
-        row_frame = tk.Frame(fields_frame, bg="#2E2E2E")
-        row_frame.pack(side="left", padx=10)
-        label = tk.Label(row_frame, text=type, **label_style)
-        label.pack(side="left", padx=5)
+    brightness_frame = tk.Frame(fields_frame, bg="#2E2E2E")
+    brightness_frame.pack(side="left", padx=10)
+    brightness_label = tk.Label(brightness_frame, text="Brightness (50)", **label_style, width=13)
+    brightness_label.pack(side="left", padx=5)
+    brightness_slider = ttk.Scale(brightness_frame, from_=0, to=100, orient="horizontal", name="brightness", value=50, command=lambda value: snap_slider(value, brightness_slider, brightness_label))
+    brightness_slider.set(50)
+    brightness_slider.pack(side="right", pady=(1,0))
 
-        # Set validation, default value and action
-        validation_command = None
-        default_value = 0
-        if type == "Brightness":
-            validation_command=(validate_0_100, "%P")
-            default_value = 50
-        elif type == "Speed":
-            validation_command=(validate_1_5, "%P")
-            default_value = 3
-        elif type == "Color":
-            validation_command=(validate_color_hex, "%P")
-            default_value = "Default"
+    speed_frame = tk.Frame(fields_frame, bg="#2E2E2E")
+    speed_frame.pack(side="left", padx=10)
+    speed_label = tk.Label(speed_frame, text="Speed (2)", **label_style)
+    speed_label.pack(side="left", padx=5)
+    speed_slider = ttk.Scale(speed_frame, from_=1, to=5, orient="horizontal", name="speed", value=2, command=lambda value: snap_slider(value, speed_slider, speed_label))
+    speed_slider.pack(side="right", pady=(1,0))
 
-        # Create field
-        entry = tk.Entry(row_frame, **entry_style, width=14, validate="key", validatecommand=validation_command, name=type.lower())
-        entry.insert(0, default_value)
-        entry.pack(side="left")
-
-        # Add binds to automatically re-apply default values
-        if type == "Color":
-            entry.bind("<Button-1>", lambda event: open_color_picker(event))
-            entry.bind("<Return>", lambda event: open_color_picker(event))
-            default_color_button = ttk.Button(row_frame, text="↺", style="Custom.TButton", width=2, command=lambda: set_default_value(gui_objects, "Color"))
-            default_color_button.pack(side="right", padx=(5,0))
-        elif type == "Brightness":
-            entry.bind("<FocusOut>", lambda event: set_default_value(gui_objects, "Brightness", "50", True))
-        elif type == "Speed":
-            entry.bind("<FocusOut>", lambda event: set_default_value(gui_objects, "Speed", "3", True))
+    color_frame = tk.Frame(fields_frame, bg="#2E2E2E")
+    color_frame.pack(side="left", padx=10)
+    color_label = tk.Label(color_frame, text="Color", **label_style)
+    color_label.pack(side="left", padx=5)
+    color_field = tk.Entry(color_frame, **entry_style, width=14, validate="key", validatecommand=(validate_color_hex, "%P"), name="color")
+    color_field.insert(0, "Default")
+    color_field.pack(side="left")
+    color_field.bind("<Button-1>", lambda event: open_color_picker(event))
+    color_field.bind("<Return>", lambda event: open_color_picker(event))
+    default_color_button = ttk.Button(color_frame, text="↺", style="Custom.TButton", width=2, command=lambda: set_default_value(gui_objects, "Color"))
+    default_color_button.pack(side="right", padx=(5,0))
         
-        gui_objects.append(entry)
-        
-
     direction_frame = tk.Frame(fields_frame, bg="#2E2E2E")
     direction_frame.pack(side="left", padx=10)
     direction_label = tk.Label(direction_frame, text="Direction", **label_style)
@@ -256,6 +238,9 @@ def load_gui():
 
     gui_objects.append(pattern_dropdown)
     gui_objects.append(direction_dropdown)
+    gui_objects.append(color_field)
+    gui_objects.append(speed_slider)
+    gui_objects.append(brightness_slider)
 
     # Keyboard layout
     keyboard_frame = tk.Frame(root, bg="#2E2E2E")
@@ -319,8 +304,7 @@ def load_gui():
     
     # Run the gui
     root.mainloop()
-
-# Apply changes from GUI
+# Apply values from GUI to device
 def apply_changes(gui_objects):
     pattern = brightness = speed = direction = color = map = fn_map = rgb = None
     for object in gui_objects:
@@ -365,13 +349,11 @@ def load_config_gui(gui_objects):
     for object in gui_objects:
         object_name = str(object).rsplit(".", 1)[-1].replace(":", "")
         if "pattern" == object_name and pattern != None:
-            object.current(RGB_PATTERNS[pattern])
+            object.current(list(RGB_PATTERNS).index(pattern))
         elif "brightness" == object_name and brightness != None:
-            object.delete(0, "end")
-            object.insert(0, str(brightness))
+            object.set(brightness)
         elif "speed" == object_name and speed != None:
-            object.delete(0, "end")
-            object.insert(0, 5 - speed)
+            object.set(5 - speed)
         elif "direction" == object_name and direction != None:
             object.delete(0, "end")
             if direction.lower() == "normal":
@@ -411,6 +393,8 @@ def save_config_gui(gui_objects):
             pattern = object.get().lower().replace(" ", "_")
         elif "brightness" == object_name:
             brightness = int(object.get())
+            if brightness > 100:
+                brightness = 100
         elif "speed" == object_name:
             speed = 5 - int(object.get())
         elif "direction" == object_name:
@@ -473,11 +457,30 @@ def set_gui_style(root):
     style.configure("TButton", background="#4CAF50", foreground="#FFFFFF", font=("Arial", 12), padding=0, borderwidth=0)
     style.configure("Custom.TButton", background="#e32d52", foreground="#FFFFFF", font=("Arial", 12), padding=0, borderwidth=0)
     style.configure("TCombobox", fieldbackground="#3C3C3C", background="#3C3C3C", foreground="white", relief="flat", selectbackground=None, selectforeground=None)
+    style.configure("TScale", background="#2E2E2E", troughcolor="#444444", sliderrelief="flat", sliderlength=15, sliderthickness=10)
     style.map("TButton", background=[("active", "#45A049"), ("pressed", "#3E8E41")], foreground=[("disabled", "#808080")])
     style.map("Custom.TButton", background=[("active", "#e33659"), ("pressed", "#e33659")], foreground=[("disabled", "#808080")])
     style.map("TCombobox", bordercolor="#3C3C3C", highlightbackground="#3C3C3C", fieldbackground="#3C3C3C")
 
     return (label_style, entry_style)
+
+# Snap the slider to the nearest integer
+def snap_slider(value, slider, label):
+    import math
+
+    # Get old value from label
+    old_value = int(label.config("text")[-1].split(" ")[1].replace("(","").replace(")",""))
+    float_value = float(value)
+    int_value = int(math.floor(float_value)) # Ceiling works better than round in this case
+
+    # Only set the value if there's an actual change. WARNING: Removing this check causes recurse errors.
+    if float_value != float(old_value):
+        label_text = label.config("text")[-1].split(" ")[0]
+        label_text = f"{label_text} ({int_value})"
+        label_text = label.config(text=label_text)
+        slider.set(int_value)
+
+    print(int_value, float_value)
 
 # Get a key id from its name
 def get_key_id(key_name):
