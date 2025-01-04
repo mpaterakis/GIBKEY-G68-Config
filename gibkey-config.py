@@ -3,6 +3,8 @@ import usb.util
 import time
 import argparse
 import json
+if True:
+    from tkinter import *
 
 RGB_PATTERNS = {
     'custom': 0,
@@ -568,25 +570,131 @@ def save_config(pattern, brightness, color, direction, speed, key_map, key_color
     with open(config_output, "w") as json_file:
         json.dump(config, json_file, indent=2)
 
+# Show the GUI
+def load_gui():
+    import tkinter as tk
+    from tkinter import ttk
+
+    # Create main window
+    root = Tk()
+
+    # Create fields
+    root.title("GIBKEY G68 Config")
+    root.configure(bg="#2E2E2E")  # Set a dark background
+
+    # Create styles
+    label_style = {"bg": "#2E2E2E", "fg": "#FFFFFF", "font": ("Arial", 12)}
+    entry_style = {"bg": "#3C3C3C", "fg": "#FFFFFF", "insertbackground": "#FFFFFF", "highlightbackground": "#5A5A5A", "relief": "flat"}
+    style = ttk.Style()
+    style.theme_use("clam")  # Use a modern theme
+    style.configure(
+        "TButton",
+        background="#4CAF50",
+        foreground="#FFFFFF",
+        font=("Arial", 12),
+        padding=0,
+        borderwidth=0
+    )
+    style.map(
+        "TButton",
+        background=[("active", "#45A049"), ("pressed", "#3E8E41")],
+        foreground=[("disabled", "#808080")],
+    )
+
+    # Frame for fields on the left
+    fields_frame = tk.Frame(root, bg="#2E2E2E")
+    fields_frame.pack(side="left", padx=20, pady=20, fill="y")
+
+    # Add labels and fields
+    fields = []
+    for i in range(5):
+        row_frame = tk.Frame(fields_frame, bg="#2E2E2E")
+        row_frame.pack(fill="x", pady=5)
+
+        label = tk.Label(row_frame, text=f"Field {i+1}:", **label_style)
+        label.pack(side="left", padx=5)
+
+        entry = tk.Entry(row_frame, **entry_style)
+        entry.pack(side="left", fill="x", expand=True, padx=5)
+        fields.append(entry)
+
+    # Add config buttons
+    buttons_frame = tk.Frame(fields_frame, bg="#2E2E2E")
+    buttons_frame.pack(pady=10)
+    load_button = ttk.Button(buttons_frame, text="Load Config", padding=5)
+    load_button.pack(side="left", padx=20)
+    save_button = ttk.Button(buttons_frame, text="Save Config", padding=5)
+    save_button.pack(side="left", padx=20)
+
+    # Keyboard layout
+    keyboard_frame = tk.Frame(root, bg="#2E2E2E")
+    keyboard_frame.pack(side="left", padx=20, pady=20)
+    keyboard_buttons = [
+        ["Esc", "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "-", "=", "Backspace", "~"],
+        ["Tab", "Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P", "[", "]", "\\", "Del"],
+        ["CapsLock", "A", "S", "D", "F", "G", "H", "J", "K", "L", ";", "'", "Enter", "PU"],
+        ["LShift", "Z", "X", "C", "V", "B", "N", "M", ",", ".", "/", "RShift", "Up", "PD"],
+        ["LCtrl", "LWin", "LAlt", "Space", "RAlt", "Fn", "RCtrl", "Left", "Down", "Right"]
+    ]
+
+    # Button sizes
+    key_width = 5
+    key_spacing = 5
+    special_keys = {
+        "Backspace": 2 * (key_width) - 1,
+        "Tab": 1.5 * (key_width),
+        "\\": 1.5 * (key_width),
+        "CapsLock": 1.75 * (key_width),
+        "LShift": 2 * (key_width),
+        "Space": 7 * (key_width) + 1,
+        "Enter": 2.5 * (key_width),
+        "RShift": 1.75 * (key_width) + 2,
+        "LCtrl": 1.25 * (key_width),
+        "LWin": 1.25 * (key_width),
+        "LAlt": 1.25 * (key_width) + 1
+    }
+
+    # Add buttons to frame
+    for row in keyboard_buttons:
+        row_frame = tk.Frame(keyboard_frame, bg="#2E2E2E")
+        for key in row:
+            width = special_keys.get(key, key_width)
+            button = ttk.Button(row_frame, text=key, width=int(width), style="TButton")
+            button.pack(side="left", padx=key_spacing, ipady=12, pady=5)
+        row_frame.pack()
+
+    # Run the gui
+    root.mainloop()
+
 # Run the program
 def run_program():
-    pattern, brightness, color, direction, speed, key_color, key_map, config_output, config_input = parse_args()
+    # Load USB device and arguments
     setup_device()
+    pattern, brightness, color, direction, speed, key_color, key_map, config_output, config_input = parse_args()
 
-    if (config_input != None):
-        pattern, brightness, color, direction, speed, key_map, key_color = load_config(pattern, brightness, color, direction, speed, key_map, key_color, config_input)
+    # If no usable parameters are given, load the GUI
+    if (len(key_map) < 1 and len(key_color) < 1 and pattern == None):
+        load_gui()
+    else:
+        # CLI functionality
+        # Load config
+        if (config_input != None):
+            pattern, brightness, color, direction, speed, key_map, key_color = load_config(pattern, brightness, color, direction, speed, key_map, key_color, config_input)
+        
+        # Load key maps
+        if (len(key_map) > 0):
+            set_key_map(key_map)
 
-    if (len(key_map) > 0):
-        set_key_map(key_map)
+        # Load key RGB or pattern
+        if (len(key_color) > 0):
+            set_pattern('custom', brightness, speed, direction)
+            set_keys_color(key_color)
+        elif (pattern != None):
+            set_pattern(pattern, brightness, speed, direction, color)
 
-    if (len(key_color) > 0):
-        set_pattern('custom', brightness, speed, direction)
-        set_keys_color(key_color)
-    elif (pattern != None):
-        set_pattern(pattern, brightness, speed, direction, color)
-
-    if (config_output != None):
-        save_config(pattern, brightness, color, direction, speed, key_map, key_color, config_output)
+        # Save config
+        if (config_output != None):
+            save_config(pattern, brightness, color, direction, speed, key_map, key_color, config_output)
 
 
 # Run the main functionality
