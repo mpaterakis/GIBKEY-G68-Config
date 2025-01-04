@@ -174,14 +174,6 @@ def load_gui():
     # Create an object that will hold all the entry values
     gui_objects = []
 
-    # Add config buttons
-    buttons_frame = tk.Frame(root, bg="#2E2E2E")
-    buttons_frame.pack(pady=15, side="top")
-    load_config_button = ttk.Button(buttons_frame, text="Load Config", padding=5, command=lambda: load_config_gui(gui_objects), style="Custom.TButton")
-    load_config_button.pack(side="left", ipadx=15, padx=(0,10))
-    save_config_button = ttk.Button(buttons_frame, text="Save Config", padding=5, command=lambda: save_config_gui(gui_objects), style="Custom.TButton")
-    save_config_button.pack(side="left", ipadx=15, padx=(10,0))
-
     # Create validation entries
     validate_color_hex = root.register(validate_color)
 
@@ -194,15 +186,36 @@ def load_gui():
         pattern_values.append(pattern.replace("_"," ").title())
 
     pattern_frame = tk.Frame(fields_frame, bg="#2E2E2E")
-    pattern_frame.pack(side="left", padx=10)
-    pattern_label = tk.Label(pattern_frame, text="Patern", **label_style)
+    pattern_frame.pack(side="left", padx=5)
+    pattern_label = tk.Label(pattern_frame, text="Pattern", **label_style)
     pattern_label.pack(side="left", padx=5)
     pattern_dropdown = ttk.Combobox(pattern_frame, values=pattern_values, style="TCombobox", state="readonly", width=15, name="pattern")
+    pattern_dropdown.bind("<<ComboboxSelected>>", lambda event: adjust_key_fields(gui_objects))
     pattern_dropdown.current(1)
     pattern_dropdown.pack(side="right", pady=(1,0))
 
+    color_frame = tk.Frame(fields_frame, bg="#2E2E2E")
+    color_frame.pack(side="left", padx=5)
+    color_label = tk.Label(color_frame, text="Color", **label_style)
+    color_label.pack(side="left", padx=5)
+    color_field = tk.Entry(color_frame, **entry_style, width=10, validate="key", validatecommand=(validate_color_hex, "%P"), name="color")
+    color_field.insert(0, "Default")
+    color_field.pack(side="left")
+    color_field.bind("<Button-1>", lambda event: open_color_picker(event, gui_objects))
+    color_field.bind("<Return>", lambda event: open_color_picker(event, gui_objects))
+    default_color_button = ttk.Button(color_frame, text="↺", style="Custom.TButton", width=2, command=lambda: set_default_value(gui_objects, "Color"))
+    default_color_button.pack(side="right", padx=(5,0))
+        
+    direction_frame = tk.Frame(fields_frame, bg="#2E2E2E")
+    direction_frame.pack(side="left", padx=5)
+    direction_label = tk.Label(direction_frame, text="Direction", **label_style)
+    direction_label.pack(side="left", padx=5)
+    direction_dropdown = ttk.Combobox(direction_frame, values=["Normal", "Reverse"], style="TCombobox", state="readonly", width=10, name="direction")
+    direction_dropdown.current(0)
+    direction_dropdown.pack(side="right", pady=(1,0))
+
     brightness_frame = tk.Frame(fields_frame, bg="#2E2E2E")
-    brightness_frame.pack(side="left", padx=10)
+    brightness_frame.pack(side="left", padx=5)
     brightness_label = tk.Label(brightness_frame, text="Brightness (50)", **label_style, width=13)
     brightness_label.pack(side="left", padx=5)
     brightness_slider = ttk.Scale(brightness_frame, from_=0, to=100, orient="horizontal", name="brightness", value=50, command=lambda value: snap_slider(value, brightness_slider, brightness_label))
@@ -210,31 +223,11 @@ def load_gui():
     brightness_slider.pack(side="right", pady=(1,0))
 
     speed_frame = tk.Frame(fields_frame, bg="#2E2E2E")
-    speed_frame.pack(side="left", padx=10)
+    speed_frame.pack(side="left", padx=5)
     speed_label = tk.Label(speed_frame, text="Speed (2)", **label_style)
     speed_label.pack(side="left", padx=5)
     speed_slider = ttk.Scale(speed_frame, from_=1, to=5, orient="horizontal", name="speed", value=2, command=lambda value: snap_slider(value, speed_slider, speed_label))
     speed_slider.pack(side="right", pady=(1,0))
-
-    color_frame = tk.Frame(fields_frame, bg="#2E2E2E")
-    color_frame.pack(side="left", padx=10)
-    color_label = tk.Label(color_frame, text="Color", **label_style)
-    color_label.pack(side="left", padx=5)
-    color_field = tk.Entry(color_frame, **entry_style, width=14, validate="key", validatecommand=(validate_color_hex, "%P"), name="color")
-    color_field.insert(0, "Default")
-    color_field.pack(side="left")
-    color_field.bind("<Button-1>", lambda event: open_color_picker(event))
-    color_field.bind("<Return>", lambda event: open_color_picker(event))
-    default_color_button = ttk.Button(color_frame, text="↺", style="Custom.TButton", width=2, command=lambda: set_default_value(gui_objects, "Color"))
-    default_color_button.pack(side="right", padx=(5,0))
-        
-    direction_frame = tk.Frame(fields_frame, bg="#2E2E2E")
-    direction_frame.pack(side="left", padx=10)
-    direction_label = tk.Label(direction_frame, text="Direction", **label_style)
-    direction_label.pack(side="left", padx=5)
-    direction_dropdown = ttk.Combobox(direction_frame, values=["Normal", "Reverse"], style="TCombobox", state="readonly", width=15, name="direction")
-    direction_dropdown.current(0)
-    direction_dropdown.pack(side="right", pady=(1,0))
 
     gui_objects.append(pattern_dropdown)
     gui_objects.append(direction_dropdown)
@@ -244,7 +237,7 @@ def load_gui():
 
     # Keyboard layout
     keyboard_frame = tk.Frame(root, bg="#2E2E2E")
-    keyboard_frame.pack(side="top", padx=20, pady=10)
+    keyboard_frame.pack(side="top", padx=20, pady=10, fill="x"),
     keyboard_keys_buttons = [
         ["Esc", "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "-", "=", "Backspace", "~"],
         ["Tab", "Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P", "[", "]", "\\", "Del"],
@@ -275,35 +268,163 @@ def load_gui():
         row_frame = tk.Frame(keyboard_frame, bg="#2E2E2E")
         for key in row:
             width = special_keys.get(key, key_width)
-            button = ttk.Button(row_frame, text=key, width=int(width), style="TButton", command=lambda k=key: select_button(k), name=get_key_id(key))
-            button.pack(side="left", padx=key_spacing, ipady=12, pady=5)
+            key_button = tk.Button(row_frame, text=key, width=int(width), command=lambda k=key: select_button(k, gui_objects), name=f"key_button_{get_key_id(key)}")
+            key_button.pack(side="left", padx=key_spacing, ipady=12, pady=5)
+            key_button.config(background="#aBaBaB", foreground="white", font=("Arial", 12), borderwidth=0, activebackground="#a3a3a3", activeforeground="white", highlightthickness=4, relief="flat")
+            key_button.key_id = get_key_id(key)
+            key_button.map = None
+            key_button.fn_map = None
+            key_button.rgb = None
+            key_button.selected = False
+            gui_objects.append(key_button)
         row_frame.pack()
-    
+
+    # Add bottom buttons
+    bottom_buttons_frame = tk.Frame(root, bg="#2E2E2E")
+    bottom_buttons_frame.pack(pady=(5,10), side="bottom")
+    load_config_button = ttk.Button(bottom_buttons_frame, text="Load Config", padding=5, command=lambda: load_config_gui(gui_objects), style="Custom.TButton")
+    load_config_button.pack(side="left", ipadx=15, padx=(0,10))
+    save_config_button = ttk.Button(bottom_buttons_frame, text="Save Config", padding=5, command=lambda: save_config_gui(gui_objects), style="Custom.TButton")
+    save_config_button.pack(side="left", ipadx=15, padx=(10,0))
+    apply_changes_button = ttk.Button(bottom_buttons_frame, text="Apply", padding=5, command=lambda: apply_changes(gui_objects), style="Custom.TButton")
+    apply_changes_button.pack(side="right", ipadx=5, padx=50)
+
     # Add per-key config buttons
-    key_config_frame = tk.Frame(root, bg="#2E2E2E")
-    key_config_frame.pack(pady=(0,10), side="bottom")
-    for type in ["Map:", "FN Map:", "RGB:"]:
-        row_frame = tk.Frame(key_config_frame, bg="#2E2E2E")
-        row_frame.pack(side="left", fill="x", pady=5)
+    key_buttons_frame = tk.Frame(root, bg="#2E2E2E", name="key_options")
+    # Disabled so it can be hidden on launch: key_buttons_frame.pack(pady=(0,10), side="bottom")
 
-        label = tk.Label(row_frame, text=type, **label_style)
-        label.pack(side="left", padx=5)
+    key_button_values = []
+    for index, key in enumerate(KEY_CODES_SORTED):
+        if "function" not in key and "unknown" not in key:
+            key_button_values.append(key)
+    
+    key_map_frame = tk.Frame(key_buttons_frame, bg="#2E2E2E")
+    key_map_frame.pack(side="left", fill="x", pady=5)
+    key_map_label = tk.Label(key_map_frame, text="Mapping", **label_style)
+    key_map_label.pack(side="left", padx=5)
+    key_map_dropdown = ttk.Combobox(key_map_frame, values=key_button_values, style="TCombobox", state="readonly", width=15, name="map")
+    key_map_dropdown.bind("<<ComboboxSelected>>", set_rgb_key_map)
+    key_map_dropdown.pack(side="right", ipadx=5)
 
-        entry = tk.Entry(row_frame, **entry_style, name=type.lower().replace(" ", "_"))
-        entry.pack(side="right", ipadx=5)
+    direction_dropdown.current(0)
+    direction_dropdown.pack(side="right", pady=(1,0))
+    
+    key_fn_map_frame = tk.Frame(key_buttons_frame, bg="#2E2E2E")
+    key_fn_map_frame.pack(side="left", fill="x", pady=5)
+    key_fn_map_label = tk.Label(key_fn_map_frame, text="FN Mapping", **label_style)
+    key_fn_map_label.pack(side="left", padx=5)
+    key_fn_map_dropdown = ttk.Combobox(key_fn_map_frame, values=key_button_values, style="TCombobox", state="readonly", width=15, name="fn_map")
+    key_fn_map_dropdown.bind("<<ComboboxSelected>>", set_rgb_key_fn_map)
+    key_fn_map_dropdown.pack(side="right", ipadx=5)
 
-        gui_objects.append(entry)
+    key_rgb_frame = tk.Frame(key_buttons_frame, bg="#2E2E2E")
+    key_rgb_frame.pack(side="left", fill="x", pady=5)
+    key_rgb_label = tk.Label(key_rgb_frame, text="RGB", **label_style)
+    key_rgb_label.pack(side="left", padx=5)
+    key_rgb_field = tk.Entry(key_rgb_frame, **entry_style, width=10, validate="key", validatecommand=(validate_color_hex, "%P"), name="rgb")
+    key_rgb_field.pack(side="left")
+    key_rgb_field.bind("<Button-1>", lambda event: open_color_picker(event, gui_objects))
+    key_rgb_field.bind("<Return>", lambda event: open_color_picker(event, gui_objects))
+    key_rgb_field.bind("<KeyRelease>", lambda event: set_rgb_key_rgb(gui_objects))
 
-    # Add bottom right buttons
-    bottom_right_buttons_frame = tk.Frame(key_config_frame, bg="#2E2E2E")
-    bottom_right_buttons_frame.pack(pady=5, padx=(45,0), side="right")
-    set_defaults_button = ttk.Button(bottom_right_buttons_frame, text="Default", padding=5, command=lambda k=key: set_default_key_value(k), style="Custom.TButton")
-    set_defaults_button.pack(side="left", ipadx=5, padx=5)
-    apply_changes_button = ttk.Button(bottom_right_buttons_frame, text="Apply", padding=5, command=lambda: apply_changes(gui_objects), style="Custom.TButton")
-    apply_changes_button.pack(side="right", ipadx=5, padx=5)
+    gui_objects.append(key_map_dropdown)
+    gui_objects.append(key_fn_map_dropdown)
+    gui_objects.append(key_rgb_field)
+    gui_objects.append(key_buttons_frame)
     
     # Run the gui
     root.mainloop()
+
+# Select a button and show its details on the GUI
+def select_button(key, gui_objects):
+    key_id = get_key_id(key)
+
+    pattern = map_field = fn_map_field = rgb_field = key_button = None
+    map_value = key
+    fn_map_value = key
+    rgb_value = "Default"
+    for object in gui_objects:
+        object_name = str(object).rsplit(".", 1)[-1].replace(":", "")
+        if "pattern" == object_name:
+            pattern = object
+        if "fn_map" == object_name:
+            fn_map_field = object
+        elif "map" == object_name:
+            map_field = object
+        elif "rgb" == object_name:
+            rgb_field = object
+        elif "key_button_" in object_name:
+            object.selected = False
+            object.config(font=("Arial", 12))
+            if object.key_id == key_id:
+                object.selected = True
+                key_button = object    
+
+    if pattern.get().lower() == "custom":
+        key_button.config(font=("Arial", 12, "bold"))
+
+    if key_button.map != None:
+        map_value = key_button.map
+    if key_button.fn_map != None:
+        fn_map_value = key_button.fn_map
+    if key_button.rgb != None:
+        rgb_value = key_button.rgb
+    
+    map_field.current(map_field["values"].index(key_id))
+    fn_map_field.current(fn_map_field["values"].index(key_id))
+    rgb_field.delete(0, "end")
+    rgb_field.insert(0, key_button.config("bg")[-1].replace("#", ""))
+
+# Set specific key's RGB
+def set_rgb_key_rgb(gui_objects):
+    selected_key = rgb = None
+    for object in gui_objects:
+        object_name = str(object).rsplit(".", 1)[-1].replace(":", "")
+        if hasattr(object, "selected") and object.selected:
+            print(object)
+            selected_key = object
+        if "rgb" == object_name:
+            rgb = object
+    
+    selected_key.config(background=f"#{rgb.get()}")
+
+# Set specific key's FN mapping
+def set_rgb_key_fn_map():
+    print()
+
+# Set specific key's mapping
+def set_rgb_key_map():
+    print()
+
+# Adjust key fields and selected key based on currently selected pattern
+def adjust_key_fields(gui_objects):
+    pattern = key_options = map = fn_map = rgb = None
+    for object in gui_objects:
+        object_name = str(object).rsplit(".", 1)[-1].replace(":", "")
+        if "pattern" == object_name:
+            pattern = object
+        elif "key_options" == object_name:
+            key_options = object
+        elif "key_button_" in object_name and object.selected:
+            object.config(font=("Arial", 12))
+        elif "fn_map" in object_name:
+            object.set("")
+        elif "map" in object_name:
+            object.set("")
+        elif "rgb" in object_name:
+            object.delete(0, "end")
+        
+
+    selected_pattern = pattern.get().lower().replace(" ", "_")
+    if selected_pattern == "custom":
+        key_options.pack(pady=(0,10), side="bottom")
+    else:
+        key_options.pack_forget()
+
+# Adjust key button styles. Buttons with remappings will be in Italics.
+def adjust_key_buttons():
+    print("IMPLEMENT ME")
+
 # Apply values from GUI to device
 def apply_changes(gui_objects):
     pattern = brightness = speed = direction = color = map = fn_map = rgb = None
@@ -350,13 +471,16 @@ def load_config_gui(gui_objects):
         object_name = str(object).rsplit(".", 1)[-1].replace(":", "")
         if "pattern" == object_name and pattern != None:
             object.current(list(RGB_PATTERNS).index(pattern))
+            adjust_key_fields(gui_objects)
         elif "brightness" == object_name and brightness != None:
             object.set(brightness)
         elif "speed" == object_name and speed != None:
             object.set(5 - speed)
         elif "direction" == object_name and direction != None:
             object.delete(0, "end")
-            if direction.lower() == "normal":
+            if str(direction).isdigit():
+                object.current(direction)
+            elif direction.lower() == "normal":
                 object.current(0)
             elif direction.lower() == "reverse":
                 object.current(1)
@@ -421,7 +545,10 @@ def set_default_value(gui_objects, target, default = "Default", only_if_empty = 
             object.insert(0, default)
 
 # Open color picker and select a color
-def open_color_picker(event):
+def open_color_picker(event, gui_objects = None):
+    if "disabled" in event.widget.config("state"):
+        return
+    
     from tkinter import colorchooser
     color_value = colorchooser.askcolor(title ="Choose color")
 
@@ -429,6 +556,14 @@ def open_color_picker(event):
         color_code = color_value[1].replace("#","").lower()
         event.widget.delete(0, "end")
         event.widget.insert(0, color_code)
+    
+    if "rgb" in str(event.widget):
+        set_rgb_key_rgb(gui_objects)
+    elif "color" in str(event.widget) and gui_objects != None:
+        for object in gui_objects:
+            if "key_button_" in str(object) and hasattr(object, "selected"):
+                object.config(bg=f"#{color_code}")
+
 
 # Validate color value
 def validate_color(value):
@@ -451,7 +586,7 @@ def set_gui_style(root):
     root.configure(bg="#2E2E2E")
     root.resizable(False,False)
     label_style = {"bg": "#2E2E2E", "fg": "#FFFFFF", "font": ("Arial", 12)}
-    entry_style = {"bg": "#3C3C3C", "fg": "#FFFFFF", "insertbackground": "#FFFFFF", "highlightbackground": "#5A5A5A", "relief": "flat"}
+    entry_style = {"bg": "#3C3C3C", "fg": "#FFFFFF", "insertbackground": "#FFFFFF", "highlightbackground": "#5A5A5A", "relief": "flat", "disabledbackground": "#3C3C3C"}
     style = ttk.Style()
     style.theme_use("clam")
     style.configure("TButton", background="#4CAF50", foreground="#FFFFFF", font=("Arial", 12), padding=0, borderwidth=0)
@@ -480,8 +615,6 @@ def snap_slider(value, slider, label):
         label_text = label.config(text=label_text)
         slider.set(int_value)
 
-    print(int_value, float_value)
-
 # Get a key id from its name
 def get_key_id(key_name):
     key_name = key_name.lower()
@@ -489,8 +622,8 @@ def get_key_id(key_name):
     if key_name == "\\": key_name = "backslash"
     if key_name == "/": key_name = "slash"
     if key_name == "~": key_name = "tilde"
-    if key_name == "PU": key_name = "pageup"
-    if key_name == "PD": key_name = "pagedown"
+    if key_name == "pu": key_name = "pageup"
+    if key_name == "pd": key_name = "pagedown"
     if key_name == ",": key_name = "comma"
     if key_name == ".": key_name = "period"
     if key_name == "[": key_name = "lbracket"
@@ -498,15 +631,10 @@ def get_key_id(key_name):
     if key_name == "-": key_name = "dash"
     if key_name == "=": key_name = "equals"
     if key_name == ";": key_name = "semicolon"
-    if key_name == "''": key_name = "quote"
+    if key_name == "del": key_name = "delete"
+    if key_name == "'": key_name = "quote"
 
     return key_name
-
-# Select a button and show its details on the GUI
-def select_button(key):
-    key_id = get_key_id(key)
-    print(key_id)
-
 
 ###################
 ## CLI functions ##
