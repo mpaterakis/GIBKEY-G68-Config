@@ -174,6 +174,7 @@ def load_gui(error_message):
     # Create main window
     root = tk.Tk()
     root.title("GIBKEY G68 Config")
+    root.iconbitmap("icon.ico")
 
     # Set style
     label_style, entry_style = set_gui_style(root)
@@ -831,9 +832,27 @@ def list_patterns():
     for index, key in enumerate(RGB_PATTERNS): 
         print(key)
 
+# Load libusb from a local file
+def load_libusb():
+    import os
+    from ctypes import CDLL
+
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    dll_path = os.path.join(current_dir, "libusb-1.0.dll")
+
+    # Load the DLL
+    try:
+        libusb = CDLL(dll_path)
+        return None
+    except OSError as e:
+        return f"Failed to load libusb: {e}"
+
 # Find and set up USB device
 def setup_device():
     global device, out_endpoint
+    error_message = load_libusb()
+    if error_message != None:
+        return error_message
     device = usb.core.find(idVendor=VENDOR_ID, idProduct=PRODUCT_ID)
     if device is None:
         return "ERROR: Device not found.\n\nMake sure that the keyboard is connected via a USB cable and is set to wired mode."

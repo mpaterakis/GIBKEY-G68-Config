@@ -3,9 +3,13 @@ A configuration tool for GIBKEY G68 keyboards. Remapping and RGB functions are f
 ![GUI Preview](preview.png)
 
 ## Usage
-1. Download `gibkey-config.py` [from the releases section](https://github.com/mpaterakis/GIBKEY-G68-Config/releases/latest).
+### Ready-to-Run!
+* Download the GIBKEY-G68-Config-VX.X.exe file [from the releases section](https://github.com/mpaterakis/GIBKEY-G68-Config/releases/latest). and run it!
+
+## Running the script in your local Python
+1. Download and extract the contents of the source code file [from the releases section](https://github.com/mpaterakis/GIBKEY-G68-Config/releases/latest). 
 2. Place [libusb's DLL](https://github.com/libusb/libusb/releases/latest) in your python directory (next to python.exe/python3.exe).
-3. Install `pyusb` (and `tkinter/ttk` if you want to use the GUI) using pip.
+3. Install `pyusb` using pip (`pip install pyusb`).
 4. Connect the keyboard and make sure it's in wired mode (FN+Y)
 5. Run the python file with no arguments to load into the GUI. You can also use the following arguments for extra functionality (`python gibkey-config.py <arguments>`):
 ```
@@ -40,3 +44,6 @@ So I decided to follow rangioli's example and start sniffing USB packets via Wir
 
 ## What about other keyboards?
 While I assume that this program will work with other 8051 (258A:0049) devices as well, it might need some tinkering. Specifically around the USB configuration part. This keyboard only receives data through interface 2 (MI_2), which might be different in other keyboards. Your mileage may vary.
+
+## Copyright
+This application uses a precompiled DLL file from [https://github.com/libusb/libusb](libusb), which is licensed under the LGPL 2.1. libusb is copyright by the libusb project, and its license is included in `COPYING.libusb`. For more information, visit: https://libusb.info
