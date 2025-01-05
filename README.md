@@ -1,5 +1,11 @@
-# GIBKEY G68 Config
-A configuration tool for GIBKEY G68 keyboards. Remapping and RGB functions are fully supported, with a nice GUI!
+
+<h1 align="center">GIBKEY G68 Config</h1>
+
+<p align="center">A configuration tool for GIBKEY G68 keyboards. Remapping and RGB functions are fully supported, with a nice GUI!
+    <img src="icon.ico">
+</p>
+
+## Preview
 ![GUI Preview](preview.png)
 
 ## Usage
