@@ -1,0 +1,52 @@
+name: Build and Package
+on:
+  push:
+    branches:
+      - '**'
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    # Step 1: Checkout the repository
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    # Step 2: Set up Python
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.11
+
+    # Step 3: Install dependencies
+    - name: Install dependencies
+      run: pip install pyinstaller
+
+    # Step 4: Build the executable
+    - name: Build executable with PyInstaller
+      run: |
+        pyinstaller --onefile --windowed \
+        --name GIBKEY-G68-Config \
+        --icon icon.ico \
+        gibkey-config.py
+
+    # Step 5: Prepare files for packaging
+    - name: Prepare files
+      run: |
+        mkdir GIBKEY-G68-Config
+        mv dist/GIBKEY-G68-Config.exe GIBKEY-G68-Config/
+        cp COPYING.libusb LICENSE README.md libusb-1.0.dll GIBKEY-G68-Config/
+
+    # Step 6: Create ZIP package
+    - name: Create ZIP package
+      run: |
+        COMMIT_SHORT=$(git rev-parse --short HEAD)
+        zip -r GIBKEY-G68-Config-${COMMIT_SHORT}.zip GIBKEY-G68-Config/
+
+    # Step 7: Upload artifact
+    - name: Upload artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: GIBKEY-G68-Config
+        path: GIBKEY-G68-Config-*.zip
