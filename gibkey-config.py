@@ -161,9 +161,15 @@ silent = False
 ###################
 
 # Show the GUI
-def load_gui():
+def load_gui(error_message):
     import tkinter as tk
     from tkinter import ttk
+    from tkinter import messagebox
+
+    # If there was any error, show a message and exit
+    if error_message != None:
+        messagebox.showerror(title="GIBKEY G68 Config", message=error_message)
+        return False
 
     # Create main window
     root = tk.Tk()
@@ -830,7 +836,7 @@ def setup_device():
     global device, out_endpoint
     device = usb.core.find(idVendor=VENDOR_ID, idProduct=PRODUCT_ID)
     if device is None:
-        raise ValueError("Device not found")
+        return "ERROR: Device not found.\n\nMake sure that the keyboard is connected via a USB cable and is set to wired mode."
     device.set_configuration()
     
     mi_02_interface = None
@@ -844,7 +850,7 @@ def setup_device():
 
     # Ensure we found the MI_02 interface
     if mi_02_interface is None:
-        raise ValueError("MI_02 interface not found")
+        return "MI_02 interface not found"
 
     # Select the OUT endpoint of the MI_02 interface
     out_endpoint = None
@@ -856,9 +862,9 @@ def setup_device():
 
     # Ensure we found the OUT endpoint
     if out_endpoint is None:
-        raise ValueError("OUT endpoint for MI_02 not found")
+        return "OUT endpoint for MI_02 not found"
     
-    return (device, out_endpoint)
+    return None
 
 # Send the data to the USB device
 def send_data(data):
@@ -1126,14 +1132,19 @@ def save_config(pattern, brightness, color, direction, speed, key_map, key_color
 # Run the program
 def run_program():
     # Load USB device and arguments
-    setup_device()
+    error_message = setup_device()
     pattern, brightness, color, direction, speed, key_color, key_map, config_output, config_input = parse_args()
 
     # If no usable parameters are given, load the GUI
     if (len(key_map) < 1 and len(key_color) < 1 and pattern == None):
-        load_gui()
+        load_gui(error_message)
     else:
         # CLI functionality
+
+        # Throw error if device didn't connect
+        if error_message != None:
+            raise ValueError(error_message)
+
         # Load config
         if (config_input != None):
             pattern, brightness, color, direction, speed, key_map, key_color = load_config(pattern, brightness, color, direction, speed, key_map, key_color, config_input)
