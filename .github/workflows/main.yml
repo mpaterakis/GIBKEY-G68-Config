@@ -1,4 +1,5 @@
 name: Build and Package
+
 on:
   push:
     branches:
@@ -13,36 +14,39 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v3
 
-    # Step 2: Set up Python
+    # Step 2: Set up Python (use latest available version, ideally Python 3.13 or a newer version)
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: 3.11
+        python-version: 3.13  # Or use 'latest' if 3.13 isn't available
 
     # Step 3: Install dependencies
     - name: Install dependencies
-      run: pip install pyinstaller
-
-    # Step 4: Build the executable
-    - name: Build executable with PyInstaller
       run: |
-        pyinstaller --onefile --windowed \
-        --name GIBKEY-G68-Config \
-        --icon icon.ico \
-        gibkey-config.py
+        pip install pyinstaller
+        pip install pyusb
+
+    # Step 4: Build executable
+    - name: Build executable with PyInstaller
+      run: pyinstaller --onefile --windowed --name GIBKEY-G68-Config --icon icon.ico gibkey-config.py
 
     # Step 5: Prepare files for packaging
     - name: Prepare files
       run: |
         mkdir GIBKEY-G68-Config
         mv dist/GIBKEY-G68-Config.exe GIBKEY-G68-Config/
-        cp COPYING.libusb LICENSE README.md libusb-1.0.dll GIBKEY-G68-Config/
+        # Using multiple cp commands
+        cp icon.ico GIBKEY-G68-Config/
+        cp COPYING.libusb GIBKEY-G68-Config/
+        cp LICENSE GIBKEY-G68-Config/
+        cp README.md GIBKEY-G68-Config/
+        cp libusb-1.0.dll GIBKEY-G68-Config/
 
     # Step 6: Create ZIP package
     - name: Create ZIP package
       run: |
-        COMMIT_SHORT=$(git rev-parse --short HEAD)
-        zip -r GIBKEY-G68-Config-${COMMIT_SHORT}.zip GIBKEY-G68-Config/
+        $commit_short = git rev-parse --short HEAD
+        Compress-Archive -Path 'GIBKEY-G68-Config\*' -DestinationPath "GIBKEY-G68-Config-${commit_short}.zip"
 
     # Step 7: Upload artifact
     - name: Upload artifact
