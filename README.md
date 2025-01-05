@@ -1,12 +1,13 @@
 # GIBKEY G68 Config
-A configuration tool for GIBKEY G68 keyboards. Remapping and RGB functions are fully supported.
+A configuration tool for GIBKEY G68 keyboards. Remapping and RGB functions are fully supported, alongside a nice GUI!
+![GUI Preview](preview.png)
 
 ## Usage
 1. Download `gibkey-config.py` [from the releases section](https://github.com/mpaterakis/GIBKEY-G68-Config/releases/latest).
 2. Place [libusb's DLL](https://github.com/libusb/libusb/releases/latest) in your python directory (next to python.exe/python3.exe).
-3. Install `pyusb` using pip.
+3. Install `pyusb` (and `tkinter/ttk` if you want to use the GUI) using pip.
 4. Connect the keyboard and make sure it's in wired mode (FN+Y)
-5. Run the python file (`python gibkey-config.py <arguments>`) using the following arguments:
+5. Run the python file with no arguments to load into the GUI. You can also use the following arguments for extra functionality (`python gibkey-config.py <arguments>`):
 ```
   -h, --help            show this help message and exit
   -s, --silent          Shoosh.
@@ -19,12 +20,16 @@ A configuration tool for GIBKEY G68 keyboards. Remapping and RGB functions are f
   -d, --direction [normal/reverse]
                         Set animation direction (normal/reverse).
   -sp, --speed [1-5]    Set animation speed (1-5).
-  -kc, --key_color [key=color] [[key=color] ...]
+  -kc, --key-color [key=color] [[key=color] ...]
                         Set inidividual key rgb (key=color). For example '-kc a=ffffff b=000000 enter=010101'
-  -km, --key_map [key=mapped_key] [[key=mapped_key] ...]
+  -km, --key-map [key=mapped_key] [[key=mapped_key] ...]
                         Set inidividual key map (key=mapped_key). For FN mappings, append _fn to the key name. For example '-km a=up b=escape x=u pageup_fn=home'.
-  --list_keys           List all usable key names.
-  --list_patterns       List all usable pattern names.
+  --list-keys           List all usable key names.
+  --list-patterns       List all usable pattern names.
+  -o, --config-output <filepath>
+                        Save the given config in a JSON file.
+  -i, --config-input <filepath>
+                        Load the config from a JSON file.
 ```
 
 ## Some history
