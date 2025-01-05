@@ -3,10 +3,10 @@ A configuration tool for GIBKEY G68 keyboards. Remapping and RGB functions are f
 ![GUI Preview](preview.png)
 
 ## Usage
-### Ready-to-Run!
-* Download the GIBKEY-G68-Config-VX.X.exe file [from the releases section](https://github.com/mpaterakis/GIBKEY-G68-Config/releases/latest). and run it!
+### Method 1: Ready-to-Run!
+1. Download the GIBKEY-G68-Config-VX.X.zip file [from the releases section](https://github.com/mpaterakis/GIBKEY-G68-Config/releases/latest), extract it and run the exe! _That's it, have fun!_
 
-## Running the script in your local Python
+### Method 2: Running the script in your local Python
 1. Download and extract the contents of the source code file [from the releases section](https://github.com/mpaterakis/GIBKEY-G68-Config/releases/latest). 
 2. Place [libusb's DLL](https://github.com/libusb/libusb/releases/latest) in your python directory (next to python.exe/python3.exe).
 3. Install `pyusb` using pip (`pip install pyusb`).
