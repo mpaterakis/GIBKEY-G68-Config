@@ -10,14 +10,16 @@
 
 ## Usage
 ### Method 1: Ready-to-Run!
-1. Download the latest GIBKEY-G68-Config-vX.X.zip file [from the releases section](https://github.com/mpaterakis/GIBKEY-G68-Config/releases/latest), extract it and run the exe! _That's it, have fun!_
+Download the latest GIBKEY-G68-Config-vX.X.zip file [from the releases section](https://github.com/mpaterakis/GIBKEY-G68-Config/releases/latest), extract it and run the exe! _That's it, have fun!_
 
 ### Method 2: Running the script in your local Python
 1. Download and extract the contents of the source code file [from the releases section](https://github.com/mpaterakis/GIBKEY-G68-Config/releases/latest). 
-2. Place [libusb's DLL](https://github.com/libusb/libusb/releases/latest) in your python directory (next to python.exe/python3.exe).
-3. Install `pyusb` using pip (`pip install pyusb`).
-4. Connect the keyboard and make sure it's in wired mode (FN+Y)
-5. Run the python file with no arguments to load into the GUI. You can also use the following arguments for extra functionality (`python gibkey-config.py <arguments>`):
+2. Install `pyusb` using pip (`pip install pyusb`).
+3. Run the `gibkey-config.py` script using python (`python gibkey-config.py <arguments>`).
+
+### Arguments
+* Run the program with no arguments to load into the GUI
+* You can also use the following arguments for extra functionality:
 ```
   -h, --help            show this help message and exit
   -s, --silent          Shoosh.
