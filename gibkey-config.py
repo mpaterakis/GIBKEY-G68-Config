@@ -837,12 +837,9 @@ def load_libusb():
     import os
     from ctypes import CDLL
 
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    dll_path = os.path.join(current_dir, "libusb-1.0.dll")
-
     # Load the DLL
     try:
-        libusb = CDLL(dll_path)
+        libusb = CDLL("libusb-1.0.dll")
         return None
     except OSError as e:
         return f"Failed to load libusb: {e}"
@@ -945,7 +942,7 @@ def generate_pattern_packet(pattern_int, brightness_int, speed_int, direction_va
     pattern = f"{pattern_int:02x}"
 
     # Add up the RGB values
-    use_default_color = f"{int(color == "default"):02x}"
+    use_default_color = f"{int(color == 'default'):02x}" # Keep the different quotes to avoid breaking older Pythons
     if (color == "default"):
         color = "ffffff"
 

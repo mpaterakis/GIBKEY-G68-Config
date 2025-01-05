@@ -4,7 +4,7 @@ A configuration tool for GIBKEY G68 keyboards. Remapping and RGB functions are f
 
 ## Usage
 ### Method 1: Ready-to-Run!
-1. Download the GIBKEY-G68-Config-vX.X.zip file [from the releases section](https://github.com/mpaterakis/GIBKEY-G68-Config/releases/latest), extract it and run the exe! _That's it, have fun!_
+1. Download the latest GIBKEY-G68-Config-vX.X.zip file [from the releases section](https://github.com/mpaterakis/GIBKEY-G68-Config/releases/latest), extract it and run the exe! _That's it, have fun!_
 
 ### Method 2: Running the script in your local Python
 1. Download and extract the contents of the source code file [from the releases section](https://github.com/mpaterakis/GIBKEY-G68-Config/releases/latest). 
