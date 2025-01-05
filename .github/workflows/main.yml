@@ -28,7 +28,7 @@ jobs:
 
     # Step 4: Build executable
     - name: Build executable with PyInstaller
-      run: pyinstaller --onefile --windowed --name GIBKEY-G68-Config --icon icon.ico gibkey-config.py
+      run: pyinstaller --onefile --windowed --name GIBKEY-G68-Config --icon icon.ico --add-data icon.ico:. gibkey-config.py
 
     # Step 5: Prepare files for packaging
     - name: Prepare files

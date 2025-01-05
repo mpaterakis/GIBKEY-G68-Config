@@ -162,6 +162,7 @@ silent = False
 
 # Show the GUI
 def load_gui(error_message):
+    import os, sys
     import tkinter as tk
     from tkinter import ttk
     from tkinter import messagebox
@@ -174,7 +175,17 @@ def load_gui(error_message):
     # Create main window
     root = tk.Tk()
     root.title("GIBKEY G68 Config")
-    root.iconbitmap("icon.ico")
+
+    # Load icon
+    try:
+        if getattr(sys, 'frozen', False):
+            # If running as PyInstaller executable
+            root.iconbitmap(os.path.join(sys._MEIPASS, "icon.ico"))
+        else:
+            # If running as a script
+            root.iconbitmap(os.path.dirname(os.path.abspath(__file__)), "icon.ico")
+    except:
+        pass
 
     # Set style
     label_style, entry_style = set_gui_style(root)
@@ -834,15 +845,28 @@ def list_patterns():
 
 # Load libusb from a local file
 def load_libusb():
-    import os
+    import os, sys
     from ctypes import CDLL
 
-    # Load the DLL
-    try:
-        libusb = CDLL("libusb-1.0.dll")
-        return None
-    except OSError as e:
-        return f"Failed to load libusb: {e}"
+    # Load the DLL from the base path where the script/exe is located
+    if getattr(sys, 'frozen', False):  # Check if running from PyInstaller's bundle
+        base_path = os.path.dirname(sys.executable)  # Path to the executable
+    else:
+        base_path = os.path.dirname(os.path.abspath(__file__))  # Path to the script
+    
+    # Define the DLL path in the original directory
+    dll_path = os.path.join(base_path, 'libusb-1.0.dll')
+
+    # Try loading the DLL from the original directory (where the .exe/.py is located)
+    if os.path.isfile(dll_path):
+        try:
+            # Load the DLL and reurn without error
+            CDLL(dll_path)
+            return None
+        except OSError as e:
+            return f"Error loading DLL from : {e}"
+    else:
+        return "libusb-1.0.dll not found."
 
 # Find and set up USB device
 def setup_device():
