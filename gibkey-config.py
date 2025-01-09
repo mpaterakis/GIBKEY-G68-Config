@@ -155,6 +155,7 @@ device = None
 out_endpoint = None
 parser = None
 silent = False
+gui_objects = []
 
 ###################
 ## GUI functions ##
@@ -190,11 +191,9 @@ def load_gui(error_message):
     # Set style
     label_style, entry_style = set_gui_style(root)
 
-    # Create an object that will hold all the entry values
-    gui_objects = []
-
     # Create validation entries
     validate_color_hex = root.register(validate_color)
+    
 
     # Create top section
     fields_frame = tk.Frame(root, bg="#2E2E2E")
@@ -209,7 +208,7 @@ def load_gui(error_message):
     pattern_label = tk.Label(pattern_frame, text="Pattern", **label_style)
     pattern_label.pack(side="left", padx=5)
     pattern_dropdown = ttk.Combobox(pattern_frame, values=pattern_values, style="TCombobox", state="readonly", width=15, name="pattern")
-    pattern_dropdown.bind("<<ComboboxSelected>>", lambda event: adjust_key_fields(gui_objects))
+    pattern_dropdown.bind("<<ComboboxSelected>>", lambda event: adjust_key_fields())
     pattern_dropdown.current(1)
     pattern_dropdown.pack(side="right", pady=(1,0))
 
@@ -220,9 +219,9 @@ def load_gui(error_message):
     color_field = tk.Entry(color_frame, **entry_style, width=10, validate="key", validatecommand=(validate_color_hex, "%P"), name="color")
     color_field.insert(0, "Default")
     color_field.pack(side="left")
-    color_field.bind("<Button-1>", lambda event: open_color_picker(event, gui_objects))
-    color_field.bind("<Return>", lambda event: open_color_picker(event, gui_objects))
-    default_color_button = ttk.Button(color_frame, text="↺", style="Custom.TButton", width=2, command=lambda: set_default_color_gui(gui_objects, "Color"))
+    color_field.bind("<Button-1>", lambda event: open_color_picker(event, True))
+    color_field.bind("<Return>", lambda event: open_color_picker(event, True))
+    default_color_button = ttk.Button(color_frame, text="↺", style="Custom.TButton", width=2, command=lambda: set_default_color_gui("Color"))
     default_color_button.pack(side="right", padx=(5,0))
         
     direction_frame = tk.Frame(fields_frame, bg="#2E2E2E")
@@ -282,8 +281,8 @@ def load_gui(error_message):
         row_frame = tk.Frame(keyboard_frame, bg="#2E2E2E")
         for key in row:
             width = special_keys.get(key, key_width)
-            key_button = tk.Button(row_frame, text=key, width=int(width), command=lambda k=key: select_key_button(k, gui_objects), name=f"key_button_{get_key_id(key)}")
-            key_button.pack(side="left", padx=key_spacing, ipady=12, pady=5)
+            key_button = tk.Button(row_frame, text=key, width=int(width), height=1, command=lambda k=key: select_key_button(k), name=f"key_button_{get_key_id(key)}")
+            key_button.pack(side="left", padx=key_spacing, ipady=11, pady=5)
             key_button.config(background=f"#{DEFAULT_GUI_RGB}", foreground="white", font=("Arial", 11), borderwidth=0, activebackground="#202020", activeforeground="white", highlightthickness=4, relief="flat")
             
             # Add key button attributes
@@ -301,11 +300,11 @@ def load_gui(error_message):
     # Add bottom buttons
     bottom_buttons_frame = tk.Frame(root, bg="#2E2E2E")
     bottom_buttons_frame.pack(pady=(5,12), side="right")
-    load_config_button = ttk.Button(bottom_buttons_frame, text="Load Config", padding=5, command=lambda: load_config_gui(gui_objects), style="Custom.TButton")
+    load_config_button = ttk.Button(bottom_buttons_frame, text="Load Config", padding=5, command=lambda: load_config_gui(), style="Custom.TButton")
     load_config_button.pack(side="left", ipadx=15, padx=10)
-    save_config_button = ttk.Button(bottom_buttons_frame, text="Save Config", padding=5, command=lambda: save_config_gui(gui_objects), style="Custom.TButton")
+    save_config_button = ttk.Button(bottom_buttons_frame, text="Save Config", padding=5, command=lambda: save_config_gui(), style="Custom.TButton")
     save_config_button.pack(side="left", ipadx=15, padx=10)
-    apply_changes_button = ttk.Button(bottom_buttons_frame, text="Apply", padding=5, command=lambda: apply_changes(gui_objects), style="Custom.TButton")
+    apply_changes_button = ttk.Button(bottom_buttons_frame, text="Apply", padding=5, command=lambda: apply_changes(), style="Custom.TButton")
     apply_changes_button.pack(side="right", ipadx=15, padx=(10,25))
 
     # Add per-key config buttons
@@ -322,7 +321,7 @@ def load_gui(error_message):
     key_map_label = tk.Label(key_map_frame, text="Mapping", **label_style)
     key_map_label.pack(side="left", padx=5)
     key_map_dropdown = ttk.Combobox(key_map_frame, values=key_button_values, style="TCombobox", state="readonly", width=15, name="map")
-    key_map_dropdown.bind("<<ComboboxSelected>>", lambda event: set_key_map_gui(gui_objects))
+    key_map_dropdown.bind("<<ComboboxSelected>>", lambda event: set_key_map_gui())
     key_map_dropdown.pack(side="right", ipadx=5)
     
     key_fn_map_frame = tk.Frame(key_buttons_frame, bg="#2E2E2E")
@@ -330,7 +329,7 @@ def load_gui(error_message):
     key_fn_map_label = tk.Label(key_fn_map_frame, text="FN Mapping", **label_style)
     key_fn_map_label.pack(side="left", padx=5)
     key_fn_map_dropdown = ttk.Combobox(key_fn_map_frame, values=key_button_values, style="TCombobox", state="readonly", width=15, name="fn_map")
-    key_fn_map_dropdown.bind("<<ComboboxSelected>>", lambda event: set_key_fn_map_gui(gui_objects))
+    key_fn_map_dropdown.bind("<<ComboboxSelected>>", lambda event: set_key_fn_map_gui())
     key_fn_map_dropdown.pack(side="right", ipadx=5)
 
     key_rgb_frame = tk.Frame(key_buttons_frame, bg="#2E2E2E", name="key_rgb_frame")
@@ -339,10 +338,12 @@ def load_gui(error_message):
     key_rgb_label.pack(side="left", padx=5)
     key_rgb_field = tk.Entry(key_rgb_frame, **entry_style, width=10, validate="key", validatecommand=(validate_color_hex, "%P"), name="rgb")
     key_rgb_field.pack(side="left")
-    key_rgb_field.bind("<Button-1>", lambda event: open_color_picker(event, gui_objects))
-    key_rgb_field.bind("<Return>", lambda event: open_color_picker(event, gui_objects))
-    key_rgb_field.bind("<KeyRelease>", lambda event: set_key_rgb_gui(gui_objects))
+    key_rgb_field.bind("<Button-1>", lambda event: open_color_picker(event))
+    key_rgb_field.bind("<Return>", lambda event: open_color_picker(event))
+    key_rgb_field.bind("<KeyRelease>", lambda event: set_key_rgb_gui(get_selected_key()))
 
+    # Create a list that will hold all the gui objects
+    global gui_objects
     gui_objects.append(pattern_dropdown)
     gui_objects.append(direction_dropdown)
     gui_objects.append(color_field)
@@ -358,31 +359,26 @@ def load_gui(error_message):
     root.mainloop()
         
 # Select a button and show its details on the GUI
-def select_key_button(key, gui_objects):
+def select_key_button(key):
     key_id = get_key_id(key)
     default_fn_key_id = get_default_fn_id(key_id)
 
-    # Get GUI elements
-    map_field = fn_map_field = rgb_field = key_button = None
+    # Get elements and values
+    map_field = get_gui_object("map")
+    fn_map_field = get_gui_object("fn_map")
+    rgb_field = get_gui_object("rgb")
+    key_button = get_gui_object(f"key_button_{key_id}")
     map_value = key_id
     rgb_value = "Default"
     fn_map_value = default_fn_key_id
-    for object in gui_objects:
-        object_name = str(object).rsplit(".", 1)[-1].replace(":", "")
-        if "fn_map" == object_name:
-            fn_map_field = object
-        elif "map" == object_name:
-            map_field = object
-        elif "rgb" == object_name:
-            rgb_field = object
-        elif "key_button_" in object_name:
-            object.selected = False
-            object.config(font=("Arial", 11))
-            if object.key_id == key_id:
-                object.selected = True
-                key_button = object    
 
-    # BOLDIFY the selected button
+    # Unset the previously selected key
+    for key_object in get_all_keys():
+        key_object.selected = False
+        key_object.config(font=("Arial", 11))
+
+    # Set the selected key and BOLDIFY it
+    key_button.selected = True
     key_button.config(font=("Arial", 11, "bold"))
 
     # Get the button's values
@@ -404,70 +400,91 @@ def select_key_button(key, gui_objects):
     rgb_field.delete(0, "end")
     rgb_field.insert(0, rgb_value)
 
-# Set specific key's RGB
-def set_key_rgb_gui(gui_objects, target = None, rgb = None):
+# Set specific key's RGB. Using the "all" value as key will apply the color to all keys.
+def set_key_rgb_gui(key = None, rgb_code = None):
+    keys = [key]
 
-    # Get GUI elements
-    for object in gui_objects:
-        object_name = str(object).rsplit(".", 1)[-1].replace(":", "")
-        if target == None and hasattr(object, "selected") and object.selected:
-            target = object
-        if rgb == None and "rgb" == object_name:
-            rgb = object.get()
-    if rgb == "default":
-        rgb = DEFAULT_GUI_RGB
+    # Get elements and values
+    if (rgb_code == None):
+        rgb_code = get_gui_object("rgb").get()
+    if rgb_code == "default":
+        rgb_code = DEFAULT_GUI_RGB
+    if key == "all":
+        keys = get_all_keys()
     
     # Set key rgb
-    target.config(background=f"#{rgb}")
-    target.rgb = rgb
+    for key_object in keys:
+        key_object.config(background=f"#{rgb_code}")
+        key_object.rgb = rgb_code
 
-    # Darken text if key is too light
-    r, g, b = int(rgb[0:2], 16), int(rgb[2:4], 16), int(rgb[4:6], 16)
-    luminance = (0.299 * r + 0.587 * g + 0.114 * b)
-    if luminance > 186:
-        target.config(foreground="black")
-    else:
-        target.config(foreground="white")
+        # Darken text if key is too light
+        r, g, b = int(rgb_code[0:2], 16), int(rgb_code[2:4], 16), int(rgb_code[4:6], 16)
+        luminance = (0.299 * r + 0.587 * g + 0.114 * b)
+        if luminance > 186:
+            key_object.config(foreground="black")
+        else:
+            key_object.config(foreground="white")
 
 # Set specific key's FN mapping
-def set_key_fn_map_gui(gui_objects, target = None, fn_map = None):
+def set_key_fn_map_gui(key = None, fn_map = None):
 
-    # Get GUI elements
-    for object in gui_objects:
-        object_name = str(object).rsplit(".", 1)[-1].replace(":", "")
-        if target == None and hasattr(object, "selected") and object.selected:
-            target = object
-        if fn_map == None and "fn_map" == object_name:
-            fn_map = object.get()
+    # Get elements and values
+    if (fn_map == None):
+        fn_map = get_gui_object("fn_map").get()
+    if key == None:
+        key = get_selected_key()
     
     # Set key fn_map
-    target.fn_map = fn_map
+    key.fn_map = fn_map
+
+    # Adjust key text
+    adjust_key_text(key)
 
 # Set specific key's mapping
-def set_key_map_gui(gui_objects, target = None, map = None):
+def set_key_map_gui(key = None, map = None):
 
-    # Get GUI elements
-    for object in gui_objects:
-        object_name = str(object).rsplit(".", 1)[-1].replace(":", "")
-        if target == None and hasattr(object, "selected") and object.selected:
-            target = object
-        if map == None and "map" == object_name:
-            map = object.get()
+    # Get elements and values
+    if (map is None):
+        map = get_gui_object("map").get()
+    if key is None:
+        key = get_selected_key()
     
     # Set key map
-    target.map = map
+    key.map = map
+
+    # Adjust key text
+    adjust_key_text(key)
+
+# Adjust key text. When a custom mapping or FN layer mapping is set, use a custom character.
+def adjust_key_text(key):
+    key_base = key.config("text")[-1].split("\n")[0]
+    key_map = ""
+    key_fn_map = ""
+    default_fn_map = get_default_fn_id(key.key_id)
+
+    if key.map != key.key_id:
+        label = key.map.capitalize()
+        mapped_key = get_gui_object(f"key_button_{key.map}")
+        if mapped_key != None:
+            label = mapped_key.config("text")[-1].split("\n")[0]
+        key_map = truncate_text(f"\n\u2937 {label}", 7)
+    if "forbidden" != default_fn_map and key.fn_map != default_fn_map:
+        label = key.fn_map.capitalize()
+        mapped_key = get_gui_object(f"key_button_{key.fn_map}")
+        if mapped_key != None:
+            label = mapped_key.config("text")[-1].split("\n")[0]
+        key_fn_map = truncate_text(f"\nFn: {label}", 8)
+    
+    name = f"{key_base}{key_map}{key_fn_map}"
+    key.config(text=name)
+
 
 # Adjust key fields and selected key based on currently selected pattern
-def adjust_key_fields(gui_objects):
-    pattern = key_rgb_frame = map = fn_map = rgb = None
+def adjust_key_fields():
 
-    # Get GUI elements
-    for object in gui_objects:
-        object_name = str(object).rsplit(".", 1)[-1].replace(":", "")
-        if "pattern" == object_name:
-            pattern = object
-        elif "key_rgb_frame" == object_name:
-            key_rgb_frame = object
+    # Get elements and values
+    pattern = get_gui_object("pattern")
+    key_rgb_frame = get_gui_object("key_rgb_frame")
 
     # If the pattern is not custom, hide the per-key RGB field
     selected_pattern = pattern.get().lower().replace(" ", "_")
@@ -476,47 +493,44 @@ def adjust_key_fields(gui_objects):
     else:
         key_rgb_frame.pack_forget()
 
+# Truncate text to a given length
+def truncate_text(text, max_length):
+    if len(text) <= max_length:
+        return text
+    return text[:max_length - 1] + "."
+
 # Generate current key map and RGB from GUI
-def generate_key_map_and_rgb(gui_objects):
+def generate_key_map_and_rgb():
     key_map_collection = {}
     keys_color_collection = {}
 
     # Get all attributes of each button, and load them into the collections
-    for object in gui_objects:
-        if "key_button_" in str(object) and hasattr(object, "selected"):
-            key_id = object.key_id
-            key_map = object.map
-            key_fn_map = object.fn_map
-            key_rgb = object.rgb
-            if key_map != None:
-                key_map_collection[key_id] = key_map
-            if key_fn_map != None:
-                key_map_collection[f"{key_id}_fn"] = key_fn_map
-            if key_rgb != None and  key_rgb != None and key_rgb.lower() != "default" and key_rgb.lower() != DEFAULT_GUI_RGB:
-                keys_color_collection[key_id] = key_rgb
+    for key in get_all_keys():
+        key_id = key.key_id
+        key_map = key.map
+        key_fn_map = key.fn_map
+        key_rgb = key.rgb
+        if key_map != None:
+            key_map_collection[key_id] = key_map
+        if key_fn_map != None:
+            key_map_collection[f"{key_id}_fn"] = key_fn_map
+        if key_rgb != None and  key_rgb != None:
+            keys_color_collection[key_id] = key_rgb
     
     return (key_map_collection, keys_color_collection)
 
 # Apply values from GUI to device
-def apply_changes(gui_objects):
-    pattern = brightness = speed = direction = color = map = fn_map = rgb = None
+def apply_changes():
+
+    # Get values
+    pattern = get_gui_object("pattern").get().lower().replace(" ", "_")
+    brightness = int(get_gui_object("brightness").get())
+    speed = int(get_gui_object("speed").get())
+    direction = get_gui_object("direction").get().lower()
+    color = f"{get_gui_object("color").get().lower():0<6}"
 
     # Get key map and RGB collections
-    key_map_collection, keys_color_collection = generate_key_map_and_rgb(gui_objects)
-
-    # Get GUI elements
-    for object in gui_objects:
-        object_name = str(object).rsplit(".", 1)[-1].replace(":", "")
-        if "pattern" == object_name:
-            pattern = object.get().lower().replace(" ", "_")
-        elif "brightness" == object_name:
-            brightness = int(object.get())
-        elif "speed" == object_name:
-            speed = 5 - int(object.get())
-        elif "direction" == object_name:
-            direction = object.get().lower()
-        elif "color" == object_name:
-            color = f"{object.get().lower():0<6}"
+    key_map_collection, keys_color_collection = generate_key_map_and_rgb()
 
     # Apply all changes, as necessary. Similar to the CLI functionality, adding some pauses just to be safe.
     if len(key_map_collection) > 0:
@@ -528,7 +542,7 @@ def apply_changes(gui_objects):
     set_pattern(pattern, brightness, speed, direction, color)
 
 # Load config from JSON file to GUI
-def load_config_gui(gui_objects):
+def load_config_gui():
     from tkinter import filedialog as fd
 
     # Open file dialog
@@ -539,51 +553,49 @@ def load_config_gui(gui_objects):
     # Load config
     pattern, brightness, color, direction, speed, key_map, key_color = load_config(None, None, None, None, None, {}, {}, filename)
 
-    # Apply all loaded into the GUI
-    for object in gui_objects:
-        object_name = str(object).rsplit(".", 1)[-1].replace(":", "")
+    # Apply all loaded values into the GUI
+    if pattern != None:
+        get_gui_object("pattern").current(list(RGB_PATTERNS).index(pattern))
+        adjust_key_fields()
 
-        # Top menu elements
-        if "pattern" == object_name and pattern != None:
-            object.current(list(RGB_PATTERNS).index(pattern))
-            adjust_key_fields(gui_objects)
-        elif "brightness" == object_name and brightness != None:
-            object.set(brightness)
-        elif "speed" == object_name and speed != None:
-            object.set(5 - speed)
-        elif "direction" == object_name and direction != None:
-            object.delete(0, "end")
-            if str(direction).isdigit():
-                object.current(direction)
-            elif direction.lower() == "normal":
-                object.current(0)
-            elif direction.lower() == "reverse":
-                object.current(1)
-        elif "color" == object_name and color != None:
-            if color == "default": color = color.capitalize()
-            object.delete(0, "end")
-            object.insert(0, color)
-            for button_object in gui_objects:
-                if "key_button_" in str(button_object) and hasattr(button_object, "selected"):
-                    set_key_rgb_gui(gui_objects, button_object, color.lower())
+    if brightness != None:
+        get_gui_object("brightness").set(brightness)
+
+    if speed != None:
+        get_gui_object("speed").set(5 - speed)
+    
+    if direction != None:
+        direction_object = get_gui_object("direction")
+        direction_object.delete(0, "end")
+        if str(direction).isdigit():
+            direction_object.current(direction)
+        elif direction.lower() == "normal":
+            direction_object.current(0)
+        elif direction.lower() == "reverse":
+            direction_object.current(1)
+
+    if color != None:
+        if color == "default": color = color.capitalize()
+        color_object = get_gui_object("color")
+        color_object.delete(0, "end")
+        color_object.insert(0, color)
+        set_key_rgb_gui("all", color.lower())
         
     # Apply per-key RGB after the global color has been set
-    for object in gui_objects:
-        object_name = str(object).rsplit(".", 1)[-1].replace(":", "")
-        if "key_button_" in object_name and hasattr(object, "selected"):
-            if key_map != None and object.key_id in key_map and key_map[object.key_id] in KEY_CODES_SORTED:
-                set_key_map_gui(gui_objects, object, key_map[object.key_id])
-            if key_map != None and f"{object.key_id}_fn" in key_map and key_map[f"{object.key_id}_fn"] in KEY_CODES_SORTED:
-                set_key_fn_map_gui(gui_objects, object, key_map[f"{object.key_id}_fn"])
-            if key_color != None and object.key_id in key_color and validate_color(key_color[object.key_id]):
-                set_key_rgb_gui(gui_objects, object, key_color[object.key_id])
+    for key in get_all_keys():
+        if key_map != None and key.key_id in key_map and key_map[key.key_id] in KEY_CODES_SORTED:
+            set_key_map_gui(key, key_map[key.key_id])
+        if key_map != None and f"{key.key_id}_fn" in key_map and key_map[f"{key.key_id}_fn"] in KEY_CODES_SORTED:
+            set_key_fn_map_gui(key, key_map[f"{key.key_id}_fn"])
+        if key_color != None and key.key_id in key_color and validate_color(key_color[key.key_id]):
+            set_key_rgb_gui(key, key_color[key.key_id])
 
 # Save config to JSON file to GUI
-def save_config_gui(gui_objects):
+def save_config_gui():
     from tkinter import filedialog as fd
 
     # Get key map and RGB collections
-    key_map_collection, keys_color_collection = generate_key_map_and_rgb(gui_objects)
+    key_map_collection, keys_color_collection = generate_key_map_and_rgb()
 
     # Open file dialog
     filename = fd.asksaveasfilename(title='Select a config file to save to', initialdir='./', filetypes=(('JSON', '*.json'),), initialfile="config.json")
@@ -591,40 +603,36 @@ def save_config_gui(gui_objects):
         return
     
     # Get values from GUI
-    for object in gui_objects:
-        object_name = str(object).rsplit(".", 1)[-1].replace(":", "")
-        if "pattern" == object_name:
-            pattern = object.get().lower().replace(" ", "_")
-        elif "brightness" == object_name:
-            brightness = int(object.get())
-            if brightness > 100:
-                brightness = 100
-        elif "speed" == object_name:
-            speed = 5 - int(object.get())
-        elif "direction" == object_name:
-            direction = object.get().lower()
-        elif "color" == object_name:
-            color = f"{object.get().lower():0<6}"
+    pattern = get_gui_object("pattern").get().lower().replace(" ", "_")
+    brightness = int(get_gui_object("brightness").get())
+    if brightness > 100:
+        brightness = 100
+    speed = 5 - int(get_gui_object("speed").get())
+    direction = get_gui_object("direction").get().lower()
+    color = f"{get_gui_object("color").get().lower():0<6}"
     
     # Save config file
     save_config(pattern, brightness, color, direction, speed, key_map_collection, keys_color_collection, filename)
 
 # Set default color value on GUI
-def set_default_color_gui(gui_objects, target, default = "Default", only_if_empty = False):
-    for object in gui_objects:
-        if target.lower() in str(object).lower().rsplit(".", 1)[-1].replace(":", ""):
-            if only_if_empty and len(object.get()) > 0:
-                return
-            object.delete(0, "end")
-            object.insert(0, default)
+def set_default_color_gui(target, default = "Default", only_if_empty = False):
+
+    # Get target
+    target = get_gui_object(target.lower(), True)
+
+    # Return if the target already has a value and only_if_empty is set
+    if only_if_empty and len(object.get()) > 0:
+        return
+    
+    # Set the value
+    target.delete(0, "end")
+    target.insert(0, default)
     
     # Set all keys to default color as well
-    for object in gui_objects:
-        if "key_button_" in str(object) and hasattr(object, "selected"):
-                set_key_rgb_gui(gui_objects, object, DEFAULT_GUI_RGB)
+    set_key_rgb_gui("all", DEFAULT_GUI_RGB)
 
 # Open color picker and select a color
-def open_color_picker(event, gui_objects = None):
+def open_color_picker(event, apply_to_all = False):
 
     # Skip if this widget has been disabled
     if "disabled" in event.widget.config("state"):
@@ -642,12 +650,47 @@ def open_color_picker(event, gui_objects = None):
         return  # Skip if the user cancelled
     
     # Apply the color on the key button(s) as well
-    if "rgb" in str(event.widget):
-        set_key_rgb_gui(gui_objects)    # Apply to selected key
-    elif "color" in str(event.widget) and gui_objects != None:
-        for object in gui_objects:
-            if "key_button_" in str(object) and hasattr(object, "selected"):
-                set_key_rgb_gui(gui_objects, object, color_code)    # Apply to all keys
+    if apply_to_all:
+        # Apply to all keys
+        set_key_rgb_gui("all", color_code)
+    else:
+        # Apply to selected key only
+        set_key_rgb_gui(get_selected_key(), color_code)
+        
+
+# Get selected key button
+def get_selected_key():
+    global gui_objects
+
+    for object in gui_objects:
+        if "key_button_" in str(object) and hasattr(object, "selected") and object.selected:
+            return object
+
+    return None
+
+# Get a GUI object by name
+def get_gui_object(name, partial_match = False):
+    global gui_objects
+
+    for object in gui_objects:
+        object_name = str(object).lower().rsplit(".", 1)[-1].replace(":", "")
+        if name == object_name:
+            return object
+        elif partial_match and name in object_name:
+            return object
+
+    return None
+
+# Get all keys
+def get_all_keys():
+    global gui_objects
+
+    keys = []
+    for object in gui_objects:
+        if "key_button_" in str(object) and hasattr(object, "selected"):
+            keys.append(object)
+
+    return keys
 
 # Validate color value
 def validate_color(value):
@@ -657,6 +700,7 @@ def validate_color(value):
 
 # Set GUI's styling. I apologize but I'm not going to explain myself here. I kind of hate ttk now because of this shit.
 def set_gui_style(root):
+    import tkinter as tk
     from tkinter import ttk
 
     root.configure(bg="#2E2E2E")
@@ -674,6 +718,10 @@ def set_gui_style(root):
     style.map("TButton", background=[("active", "#45A049"), ("pressed", "#3E8E41")], foreground=[("disabled", "#808080")])
     style.map("Custom.TButton", background=[("active", "#e33659"), ("pressed", "#e33659")], foreground=[("disabled", "#808080")])
     style.map("TCombobox", bordercolor="#3C3C3C", highlightbackground="#3C3C3C", fieldbackground="#3C3C3C")
+
+    # Preload the bold font to prevent issues later
+    dummy_label = tk.Label(root, text="⤷", font=("Arial", 11, "bold"))
+    dummy_label.pack_forget()
 
     return (label_style, entry_style)
 
