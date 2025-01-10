@@ -535,7 +535,7 @@ def apply_changes():
     # Get values
     pattern = get_gui_object("pattern").get().lower().replace(" ", "_")
     brightness = int(get_gui_object("brightness").get())
-    speed = int(get_gui_object("speed").get())
+    speed = 5 - int(get_gui_object("speed").get())
     direction = get_gui_object("direction").get().lower()
     color = f"{get_gui_object("color").get().lower():0<6}"
 
