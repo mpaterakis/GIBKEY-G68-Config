@@ -315,6 +315,7 @@ def load_gui(error_message):
     for index, key in enumerate(KEY_CODES_SORTED):
         if "function" not in key and "unknown" not in key:
             key_button_values.append(key)
+    key_button_values = sorted(key_button_values, key=lambda key_id: (len(key_id) > 1, key_id))
     
     key_map_frame = tk.Frame(key_buttons_frame, bg="#2E2E2E")
     key_map_frame.pack(side="left", fill="x", pady=5)
@@ -390,13 +391,19 @@ def select_key_button(key):
         rgb_value = key_button.rgb
     
     # Load the button values into the fields
-    if fn_map_value != "forbidden":    # Not all keys should have an FN remap. Default options need to be preserved.
+    if fn_map_value != "forbidden":              # Not all keys should have an FN remap. Default options need to be preserved.
         fn_map_field.current(fn_map_field["values"].index(fn_map_value))
         fn_map_field.config(state="readonly")
     else:
         fn_map_field.config(state="disabled")
         fn_map_field.set("")
-    map_field.current(map_field["values"].index(map_value))
+
+    if key_id != "fn":                           # FN key must not be remapped
+        map_field.current(map_field["values"].index(map_value))
+        map_field.config(state="readonly")
+    else:
+        map_field.config(state="disabled")
+        map_field.set("")
     rgb_field.delete(0, "end")
     rgb_field.insert(0, rgb_value)
 
@@ -461,19 +468,22 @@ def adjust_key_text(key):
     key_map = ""
     key_fn_map = ""
     default_fn_map = get_default_fn_id(key.key_id)
+    button_size = int(key.config("width")[-1])
 
     if key.map != key.key_id:
         label = key.map.capitalize()
         mapped_key = get_gui_object(f"key_button_{key.map}")
         if mapped_key != None:
             label = mapped_key.config("text")[-1].split("\n")[0]
-        key_map = truncate_text(f"\n\u2937 {label}", 7)
+        key_map = truncate_text(f"\n\u2937 {label}", round(button_size * 1.5))
     if "forbidden" != default_fn_map and key.fn_map != default_fn_map:
         label = key.fn_map.capitalize()
         mapped_key = get_gui_object(f"key_button_{key.fn_map}")
         if mapped_key != None:
             label = mapped_key.config("text")[-1].split("\n")[0]
-        key_fn_map = truncate_text(f"\nFn: {label}", 8)
+        if button_size == 9:
+            button_size = 8
+        key_fn_map = truncate_text(f"\nFn: {label}", round(button_size * 1.5))
     
     name = f"{key_base}{key_map}{key_fn_map}"
     key.config(text=name)
@@ -1119,7 +1129,7 @@ def get_default_fn_id(key_id, return_functions = False):
         elif key_id == "q":
             fn_key_id = "function_enter_wireless_mode"
 
-        if "function" in fn_key_id and not return_functions:
+        if ("function" in fn_key_id or "fn" == fn_key_id) and not return_functions:
             fn_key_id = "forbidden"
         
         return fn_key_id
