@@ -54,4 +54,4 @@ So I decided to follow rangioli's example and start sniffing USB packets via Wir
 While I assume that this program will work with other 8051 (258A:0049) devices as well, it might need some tinkering. Specifically around the USB configuration part. This keyboard only receives data through interface 2 (MI_2), which might be different in other keyboards. Your mileage may vary.
 
 ## Copyright
-This application uses a precompiled DLL file from [https://github.com/libusb/libusb](libusb), which is licensed under the LGPL 2.1. libusb is copyright by the libusb project, and its license is included in `COPYING.libusb`. For more information, visit: https://libusb.info
+This application uses a precompiled DLL file from [libusb](https://github.com/libusb/libusb), which is licensed under the LGPL 2.1. libusb is copyright by the libusb project, and its license is included in `COPYING.libusb`. For more information, visit: https://libusb.info
